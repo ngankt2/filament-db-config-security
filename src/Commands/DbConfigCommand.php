@@ -1,0 +1,185 @@
+<?php
+
+namespace Inerba\DbConfig\Commands;
+
+use Illuminate\Console\Command;
+use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Pluralizer;
+use Illuminate\Support\Str;
+
+/**
+ * @method mixed argument(string|null $key = null)
+ * @method void info(string $message)
+ * @method void warn(string $message)
+ */
+class DbConfigCommand extends Command
+{
+    public $signature = 'make:db-config {name} {panel?}';
+
+    public $description = 'Create a new Filament settings Page class and its Blade view. '
+        . 'Usage: php artisan make:db-config {name} {panel?} — generates '
+        . 'app/Filament/{Panel}/Pages/{Name}Settings.php and '
+        . 'resources/views/filament/config-pages/{name}.blade.php. '
+        . 'Existing files will not be overwritten.';
+
+    /**
+     * Filesystem instance
+     */
+    protected Filesystem $files;
+
+    /**
+     * Create a new command instance.
+     */
+    public function __construct(Filesystem $files)
+    {
+        parent::__construct();
+
+        $this->files = $files;
+    }
+
+    /**
+     * Execute the console command.
+     */
+    public function handle(): void
+    {
+        $path = $this->getSourceFilePath();
+
+        $this->makeDirectory(dirname($path));
+
+        $contents = $this->getSourceFile();
+
+        $this->createViewFromStub('filament.pages.' . Str::of($this->argument('name'))->headline()->lower()->slug() . '-settings');
+
+        if (! $this->files->exists($path)) {
+            $this->files->put($path, $contents);
+            $this->info("File : {$path} created");
+        } else {
+            $this->warn("File : {$path} already exits");
+        }
+    }
+
+    /**
+     * Create a new view file from the stub.
+     *
+     * @param  string  $viewName  The name of the view.
+     */
+    public function createViewFromStub(string $viewName): void
+    {
+        // Define the path to the view stub.
+        $viewStubPath = __DIR__ . '/../../stubs/view.stub';
+
+        // Define the path to the new view file.
+        $newViewPath = \resource_path('views/' . str_replace('.', '/', $viewName) . '.blade.php');
+
+        if ($this->files->exists($newViewPath)) {
+            $this->warn("File : {$newViewPath} already exists");
+
+            return;
+        }
+
+        // Read the contents of the view stub.
+        $viewStubContents = file_get_contents($viewStubPath);
+
+        // Replace any variables in the stub contents.
+        // In this example, we're replacing a variable named 'VIEW_NAME'.
+        $viewContents = str_replace('$VIEW_NAME$', $viewName, $viewStubContents);
+
+        // Create the directory for the new view file, if it doesn't already exist.
+        $this->makeDirectory(dirname($newViewPath));
+
+        // Write the view contents to the new view file.
+        file_put_contents($newViewPath, $viewContents);
+
+        $this->info("View file : {$newViewPath} created");
+    }
+
+    /**
+     * Return the stub file path
+     */
+    public function getStubPath(): string
+    {
+        return __DIR__ . '/../../stubs/page.stub';
+    }
+
+    /**
+     * Map the stub variables present in stub to its value
+     *
+     * @return array<string,string>
+     */
+    public function getStubVariables(): array
+    {
+        $singularClassName = $this->getSingularClassName((string) $this->argument('name'));
+
+        return [
+            'TITLE' => Str::headline($singularClassName),
+            'PANEL' => $this->argument('panel') ? ucfirst($this->argument('panel')) . '\\' : '',
+            'CLASS_NAME' => $singularClassName,
+            'SETTING_NAME' => Str::of($this->argument('name'))->headline()->lower()->slug(),
+        ];
+    }
+
+    /**
+     * Get the stub path and the stub variables
+     *
+     * @return string|false The generated source contents or false on failure
+     */
+    public function getSourceFile(): string|false
+    {
+        return $this->getStubContents($this->getStubPath(), $this->getStubVariables());
+    }
+
+    /**
+     * Replace the stub variables(key) with the desire value
+     *
+     * @param  array<string,string>  $stubVariables
+     * @return string|false
+     */
+    public function getStubContents(string $stub, array $stubVariables = []): string|false
+    {
+        $contents = file_get_contents($stub);
+
+        if ($contents === false) {
+            return false;
+        }
+
+        foreach ($stubVariables as $search => $replace) {
+            $contents = str_replace('$' . $search . '$', $replace, $contents);
+        }
+
+        return $contents;
+    }
+
+    /**
+     * Get the full path of the generated class.
+     */
+    public function getSourceFilePath(): string
+    {
+        $panel = $this->argument('panel');
+        $panelPrefix = $panel ? ucfirst($panel) . '\\' : '';
+
+        $path = \base_path('app\\Filament\\' . $panelPrefix . 'Pages') . '\\' . $this->getSingularClassName($this->argument('name')) . 'Settings.php';
+
+        return str_replace('\\', '/', $path);
+    }
+
+    /**
+     * Return the Singular Capitalize Name
+     */
+    public function getSingularClassName(string $name): string
+    {
+        return ucwords(Pluralizer::singular($name));
+    }
+
+    /**
+     * Build the directory for the class if necessary.
+     */
+    protected function makeDirectory(string $path): string
+    {
+
+        if (! $this->files->isDirectory($path)) {
+            $this->files->makeDirectory($path, 0777, true, true);
+        }
+
+        return $path;
+    }
+}
