@@ -16,7 +16,7 @@ It is framework-friendly, requires no custom Eloquent models in your app, and pe
 Install the package via Composer (choose the version matching your Laravel version):
 
 ```bash
-composer require inerba/db-config
+composer require inerba/filament-db-config
 ```
 
 Publish and run the migration:
