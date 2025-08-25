@@ -1,10 +1,40 @@
-# DB Config
+# DB Config – Lightweight settings & content manager for Filament
 
-DB Config is a Filament plugin that provides a simple, database-backed key/value store for application settings, along with a streamlined way to build settings pages using Filament. It exposes a clean API for reading and writing values and uses transparent caching under the hood.
+DB Config is a Filament plugin that provides a simple, database-backed key/value store for **application settings** and **editable content**.  
+It’s ideal both for storing configuration (like site name, contact info, labels) and for managing page sections (homepage hero, landing blocks, about text, etc.) without the need for a full CMS.
 
-It is framework-friendly, requires no custom Eloquent models in your app, and persists values as JSON in a dedicated table.
+It exposes a clean API for reading and writing values, uses transparent caching under the hood, and persists data as JSON in a dedicated table.  
+It is framework-friendly and requires no custom Eloquent models in your app.
 
 <img width="1280" height="640" alt="filament-db-config" src="https://raw.githubusercontent.com/inerba/filament-db-config/refs/heads/main/screenshot.jpg" />
+
+## Why use DB Config when Spatie Settings already exists?
+
+Both [DB Config](https://github.com/inerba/filament-db-config) and the official [Spatie Laravel Settings plugin](https://github.com/filamentphp/spatie-laravel-settings-plugin) solve a similar problem — managing application settings in Laravel + Filament — but they take very different approaches.  
+Spatie Settings focuses on **strict typing, validation, and integration with your domain logic**, while DB Config is designed to be **lightweight, flexible, and quick to set up**, even for editable content blocks.
+
+The table below highlights the key differences so you can choose the right tool for your project:
+
+| Feature / Characteristic | filament-db-config                                                       | Spatie Settings                                                                     |
+| ------------------------ | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| **Setup**                | Ready to use, no extra classes or migrations                             | Requires a dedicated `Settings` class for each group, plus migration to register it |
+| **Data storage**         | Single `db_config` table with JSON values                                | Each group stored as its own settings record (linked to its Settings class)         |
+| **Boilerplate**          | None required                                                            | A new PHP class must be created for every settings group                            |
+| **Access**               | Dot notation, supports nested keys in JSON                               | Strongly typed properties defined in the Settings class                             |
+| **Cache**                | Built-in, refreshed automatically on write                               | Built-in, but usually configured explicitly                                         |
+| **Ideal for**            | Application settings and editable page content (homepage, blocks, texts) | Strictly typed, validated settings tightly bound to app logic                       |
+| **Content usage**        | Can store full page sections (homepage, landing, about, etc.)            | Not designed for CMS-like use                                                       |
+| **Dependencies**         | No external deps                                                         | Requires `spatie/laravel-settings`                                                  |
+
+### When to use DB Config
+
+Choose **DB Config** if you want:
+
+* A **lightweight key/value system** for both settings and content.
+* Minimal setup, no boilerplate code.
+* Flexibility to manage simple settings and even **page content** directly in Filament.
+
+Choose Spatie Laravel Settings plugin if you need **strict typing, validation, and DTOs** as part of your domain logic.
 
 ## Requirements
 
@@ -207,8 +237,11 @@ This package stores settings as JSON. Ensure your chosen database supports JSON 
 
 ## Security considerations
 
-- Do not store secrets that belong in environment variables or the configuration cache (API keys, DB credentials). Use this package for runtime-editable application settings (e.g. labels, feature flags, contact info).
+- Do not store secrets that belong in environment variables or the configuration cache (API keys, DB credentials).  
+  Use this package for **application settings and editable content** (e.g. labels, texts, contact information, page sections).  
 - Values are not encrypted by default. If you need encryption, wrap reads/writes with your own encryption layer before passing to the API.
+
+> Think of DB Config as a place for values you want admins to edit safely at runtime, not for infrastructure secrets.
 
 ## Versioning
 
