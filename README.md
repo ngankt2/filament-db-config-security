@@ -8,23 +8,25 @@ It is framework-friendly and requires no custom Eloquent models in your app.
 
 <img width="1280" height="640" alt="filament-db-config" src="https://raw.githubusercontent.com/inerba/filament-db-config/refs/heads/main/screenshot.jpg" />
 
+> You may use **any Filament form fields or layout components - including third-party ones -** to build your settings and content pages, giving you full flexibility in how data is structured and edited.
+
 ## Why use DB Config when Spatie Settings already exists?
 
-Both [DB Config](https://github.com/inerba/filament-db-config) and the official [Spatie Laravel Settings plugin](https://github.com/filamentphp/spatie-laravel-settings-plugin) solve a similar problem — managing application settings in Laravel + Filament — but they take very different approaches.  
+Both [DB Config](https://github.com/inerba/filament-db-config) and the official [Spatie Laravel Settings Plugin](https://github.com/filamentphp/spatie-laravel-settings-plugin) solve a similar problem - managing application settings in Laravel + Filament - but they take very different approaches.  
 Spatie Settings focuses on **strict typing, validation, and integration with your domain logic**, while DB Config is designed to be **lightweight, flexible, and quick to set up**, even for editable content blocks.
 
 The table below highlights the key differences so you can choose the right tool for your project:
 
-| Feature / Characteristic | filament-db-config                                                       | Spatie Settings                                                                     |
-| ------------------------ | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| **Setup**                | Ready to use, no extra classes or migrations                             | Requires a dedicated `Settings` class for each group, plus migration to register it |
-| **Data storage**         | Single `db_config` table with JSON values                                | Each group stored as its own settings record (linked to its Settings class)         |
-| **Boilerplate**          | None required                                                            | A new PHP class must be created for every settings group                            |
-| **Access**               | Dot notation, supports nested keys in JSON                               | Strongly typed properties defined in the Settings class                             |
-| **Cache**                | Built-in, refreshed automatically on write                               | Built-in, but usually configured explicitly                                         |
-| **Ideal for**            | Application settings and editable page content (homepage, blocks, texts) | Strictly typed, validated settings tightly bound to app logic                       |
-| **Content usage**        | Can store full page sections (homepage, landing, about, etc.)            | Not designed for CMS-like use                                                       |
-| **Dependencies**         | No external deps                                                         | Requires `spatie/laravel-settings`                                                  |
+| Feature           | DB Config                                                                | Spatie Laravel Settings Plugin                                                      |
+| ----------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| **Setup**         | Ready to use, no extra classes or migrations                             | Requires a dedicated `Settings` class for each group, plus migration to register it |
+| **Data storage**  | Single `db_config` table with JSON values                                | Each group stored as its own settings record (linked to its Settings class)         |
+| **Boilerplate**   | None required                                                            | A new PHP class must be created for every settings group                            |
+| **Access**        | Dot notation, supports nested keys in JSON                               | Strongly typed properties defined in the Settings class                             |
+| **Cache**         | Built-in, refreshed automatically on write                               | Built-in, but usually configured explicitly                                         |
+| **Ideal for**     | Application settings and editable page content (homepage, blocks, texts) | Strictly typed, validated settings tightly bound to app logic                       |
+| **Content usage** | Can store full page sections (homepage, landing, about, etc.)            | Not designed for CMS-like use                                                       |
+| **Dependencies**  | No external deps                                                         | Requires `spatie/laravel-settings`                                                  |
 
 ### When to use DB Config
 
@@ -201,7 +203,7 @@ Facade (optional):
 
 - Keys are split by dots. The first segment is the `group`, the second is the top-level `setting`, and any remaining segments are treated as nested keys inside the stored JSON.
 - Example: `profile.preferences.theme` stores/reads from row `(group=profile, key=preferences)` and resolves the nested path `theme` inside the JSON payload.
-- Avoid using group-only keys (e.g. `profile`) — always specify at least `group.setting`.
+- Avoid using group-only keys (e.g. `profile`) - always specify at least `group.setting`.
 
 Examples:
 
