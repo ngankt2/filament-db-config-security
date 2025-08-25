@@ -4,6 +4,8 @@ DB Config is a Filament plugin that provides a simple, database-backed key/value
 
 It is framework-friendly, requires no custom Eloquent models in your app, and persists values as JSON in a dedicated table.
 
+<img width="1280" height="640" alt="filament-db-config" src="https://raw.githubusercontent.com/inerba/filament-db-config/refs/heads/main/screenshot.jpg" />
+
 ## Requirements
 
 - PHP version supported by your Laravel installation
