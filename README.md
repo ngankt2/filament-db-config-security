@@ -3,12 +3,43 @@
 DB Config is a Filament plugin that provides a simple, database-backed key/value store for **application settings** and **editable content**.  
 It’s ideal both for storing configuration (like site name, contact info, labels) and for managing page sections (homepage hero, landing blocks, about text, etc.) without the need for a full CMS.
 
-It exposes a clean API for reading and writing values, uses transparent caching under the hood, and persists data as JSON in a dedicated table.  
+- 🔑 Store application settings in a simple key/value table  
+- 📝 Manage editable content (homepages, landing pages, about sections)  
+- ⚡ Use any Filament form fields or layouts — including third-party ones  
+- 🗄️ Transparent caching, no extra boilerplate, zero external deps  
+
+It provides a clean set of simple helpers for reading and writing values, with transparent caching under the hood, and persists data as JSON in a dedicated table.  
 It is framework-friendly and requires no custom Eloquent models in your app.
 
 <img width="1280" height="640" alt="filament-db-config" src="https://raw.githubusercontent.com/inerba/filament-db-config/refs/heads/main/screenshot.jpg" />
 
 > You may use **any Filament form fields or layout components - including third-party ones -** to build your settings and content pages, giving you full flexibility in how data is structured and edited.
+
+<div class="filament-hidden">
+<b>Table of Contents</b>
+
+- [DB Config – Lightweight settings \& content manager for Filament](#db-config--lightweight-settings--content-manager-for-filament)
+  - [Why use DB Config when Spatie Settings already exists?](#why-use-db-config-when-spatie-settings-already-exists)
+  - [Requirements](#requirements)
+  - [Installation](#installation)
+  - [Scaffolding \& Filament integration](#scaffolding--filament-integration)
+  - [Read \& write values](#read--write-values)
+    - [Read a value (helper):](#read-a-value-helper)
+    - [Blade directive](#blade-directive)
+    - [Read a value (class):](#read-a-value-class)
+    - [Write a value:](#write-a-value)
+    - [Read an entire group as associative array:](#read-an-entire-group-as-associative-array)
+    - [Facade (optional):](#facade-optional)
+  - [How it works](#how-it-works)
+  - [Database schema](#database-schema)
+  - [Working with nested values](#working-with-nested-values)
+  - [Caching behavior](#caching-behavior)
+  - [Return values and defaults](#return-values-and-defaults)
+  - [Database engines](#database-engines)
+  - [Security considerations](#security-considerations)
+  - [Versioning](#versioning)
+  - [License](#license)
+</div>
 
 ## Why use DB Config when Spatie Settings already exists?
 
@@ -28,15 +59,13 @@ The table below highlights the key differences so you can choose the right tool 
 | **Content usage** | Can store full page sections (homepage, landing, about, etc.)            | Not designed for CMS-like use                                                       |
 | **Dependencies**  | No external deps                                                         | Requires `spatie/laravel-settings`                                                  |
 
-### When to use DB Config
-
 Choose **DB Config** if you want:
 
 * A **lightweight key/value system** for both settings and content.
 * Minimal setup, no boilerplate code.
 * Flexibility to manage simple settings and even **page content** directly in Filament.
 
-Choose Spatie Laravel Settings plugin if you need **strict typing, validation, and DTOs** as part of your domain logic.
+Choose **Spatie Laravel Settings Plugin** if you need **strict typing, validation, and DTOs** as part of your domain logic.
 
 ## Requirements
 
@@ -62,11 +91,11 @@ php artisan migrate
 
 This creates a `db_config` table used to store your settings.
 
-## Usage of the `make:db-config` command
+## Scaffolding & Filament integration
 
-The package provides an Artisan generator that quickly creates a Filament settings page (Page class + Blade view).
+DB Config ships with an Artisan generator and an abstract Page class to quickly scaffold Filament settings pages.
 
-Command:
+**Generate a settings page**
 
 ```bash
 php artisan make:db-config {name} {panel?}
@@ -80,8 +109,8 @@ Parameters:
 Examples:
 
 ```bash
-php artisan make:db-config website
-php artisan make:db-config website admin
+php artisan make:db-config website            # default panel
+php artisan make:db-config website admin      # specific panel (e.g. Admin)
 ```
 
 What is generated:
@@ -95,32 +124,6 @@ Behavior:
 - Names are normalized: the class uses the singular form of the provided name, the view is slugified (spaces and special characters are converted).
 
 Note: the generated class extends `Inerba\DbConfig\AbstractPageSettings` and the view is placed under `resources/views/filament/config-pages/`.
-
-## How it works
-
-Settings are organized by a two-part key: `group.setting`, with optional nested sub-keys (e.g. `group.setting.nested.key`).
-
-Under the hood:
-
-- Settings are stored in a single row per `(group, key)` with the JSON payload in the `settings` column.
-- Reads are cached forever under the cache key `db-config.{group}.{setting}`.
-- Writes clear the corresponding cache entry to keep reads fresh.
-
-## Filament integration
-
-This package ships with an Artisan generator and an abstract Page class to quickly scaffold Filament settings pages.
-
-Generate a settings page (and its Blade view):
-
-```bash
-php artisan make:db-config website            # default panel
-php artisan make:db-config website admin      # specific panel (e.g. Admin)
-```
-
-What gets generated:
-
-- A Page class in `app/Filament/{Panel}/Pages/*SettingsPage.php` that extends `Inerba\DbConfig\AbstractPageSettings`.
-- A Blade view at `resources/views/filament/config-pages/{name}.blade.php` which renders the page content.
 
 Page lifecycle and saving:
 
@@ -150,6 +153,67 @@ public function content(Schema $schema): Schema
 }
 ```
 
+## Read & write values
+
+The simplest way to manage values is through the **Filament pages scaffolded by DB Config**:  
+you can define the fields you need (text inputs, toggles, repeaters, rich text, even third-party components) and edit them directly in the admin panel.  
+All changes are saved automatically in the `db_config` table and cached for fast access.
+
+For programmatic access, the package also provides simple helpers and static methods:
+
+### Read a value (helper):
+
+```php
+db_config('website.site_name', 'Default Name');
+```
+
+### Blade directive
+
+You can also access values directly inside Blade templates:
+
+```blade
+@db_config('website.site_name', 'Default Name')
+```
+
+### Read a value (class):
+
+```php
+\Inerba\DbConfig\DbConfig::get('website.site_name', 'Default Name');
+```
+
+### Write a value:
+
+```php
+\Inerba\DbConfig\DbConfig::set('website.site_name', 'Acme Inc.');
+```
+
+### Read an entire group as associative array:
+
+```php
+\Inerba\DbConfig\DbConfig::getGroup('website');
+// => [ 'site_name' => 'Acme Inc.', 'contact' => ['email' => 'info@acme.test'] ]
+```
+
+### Facade (optional):
+
+```php
+\Inerba\DbConfig\Facades\DbConfig::get('website.site_name');
+```
+> Note: these values are not part of Laravel’s config() cache.
+Always use db_config() or @db_config instead of config().
+
+> The `db_config()` helper is auto-registered by the package and is the recommended way to read values in application code.
+
+## How it works
+
+Settings are organized by a two-part key: `group.setting`, with optional nested sub-keys (e.g. `group.setting.nested.key`).
+
+Under the hood:
+
+- Settings are stored in a single row per `(group, key)` with the JSON payload in the `settings` column.
+- Reads are cached forever under the cache key `db-config.{group}.{setting}`.
+- Writes clear the corresponding cache entry to keep reads fresh.
+
 ## Database schema
 
 The `db_config` table contains:
@@ -162,50 +226,15 @@ The `db_config` table contains:
 
 There is a unique index on (`group`, `key`). Timestamps are present but not used by the package logic and may remain null depending on your database defaults.
 
-## API
+## Working with nested values
 
-The package exposes a minimal API for interacting with settings.
+DB Config uses a `group.setting` format for keys, with optional nested sub-keys resolved from JSON.
 
-Read a value (helper):
+- The first segment is the **group**  
+- The second is the **top-level key**  
+- Any remaining segments are treated as nested paths inside the JSON value  
 
-```php
-db_config('website.site_name', 'Default Name');
-```
-
-Read a value (class):
-
-```php
-\Inerba\DbConfig\DbConfig::get('website.site_name', 'Default Name');
-```
-
-Write a value:
-
-```php
-\Inerba\DbConfig\DbConfig::set('website.site_name', 'Acme Inc.');
-```
-
-Read an entire group as associative array:
-
-```php
-\Inerba\DbConfig\DbConfig::getGroup('website');
-// => [ 'site_name' => 'Acme Inc.', 'contact' => ['email' => 'info@acme.test'] ]
-```
-
-Facade (optional):
-
-```php
-\Inerba\DbConfig\Facades\DbConfig::get('website.site_name');
-```
-
-> The `db_config()` helper is auto-registered by the package and is the recommended way to read values in application code.
-
-## Keys and nested data
-
-- Keys are split by dots. The first segment is the `group`, the second is the top-level `setting`, and any remaining segments are treated as nested keys inside the stored JSON.
-- Example: `profile.preferences.theme` stores/reads from row `(group=profile, key=preferences)` and resolves the nested path `theme` inside the JSON payload.
-- Avoid using group-only keys (e.g. `profile`) - always specify at least `group.setting`.
-
-Examples:
+Example:
 
 ```php
 // Store a nested structure
@@ -239,11 +268,9 @@ This package stores settings as JSON. Ensure your chosen database supports JSON 
 
 ## Security considerations
 
-- Do not store secrets that belong in environment variables or the configuration cache (API keys, DB credentials).  
-  Use this package for **application settings and editable content** (e.g. labels, texts, contact information, page sections).  
-- Values are not encrypted by default. If you need encryption, wrap reads/writes with your own encryption layer before passing to the API.
+> ⚠️ DB Config is a place for values you want admins to edit safely at runtime, not for infrastructure secrets (API keys, DB credentials).
+- Values are not encrypted by default. If you need encryption, apply it before using the package’s helpers to read or write values.
 
-> Think of DB Config as a place for values you want admins to edit safely at runtime, not for infrastructure secrets.
 
 ## Versioning
 
