@@ -54,7 +54,7 @@ class DbConfig
     {
         $settings = [];
 
-        DB::table('db_config')->where('group', $group)->get()->each(function ($setting) use (&$settings) {
+        DB::table('db_config')->where('group', $group)->get()->each(function (\stdClass $setting) use (&$settings) {
             $settings[$setting->key] = json_decode($setting->settings, true);
         });
 
@@ -82,12 +82,13 @@ class DbConfig
      */
     protected static function fetchConfig(string $group, string $setting): array
     {
+        /** @var \stdClass|null $item */
         $item = DB::table('db_config')
             ->where('group', $group)
             ->where('key', $setting)
             ->first();
 
-        if (! $item) {
+        if ($item === null || ! property_exists($item, 'settings')) {
             return [];
         }
 

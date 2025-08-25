@@ -17,10 +17,10 @@ class DbConfigCommand extends Command
     public $signature = 'make:db-config {name} {panel?}';
 
     public $description = 'Create a new Filament settings Page class and its Blade view. '
-        . 'Usage: php artisan make:db-config {name} {panel?} — generates '
-        . 'app/Filament/{Panel}/Pages/{Name}Settings.php and '
-        . 'resources/views/filament/config-pages/{name}.blade.php. '
-        . 'Existing files will not be overwritten.';
+        .'Usage: php artisan make:db-config {name} {panel?} — generates '
+        .'app/Filament/{Panel}/Pages/{Name}Settings.php and '
+        .'resources/views/filament/config-pages/{name}.blade.php. '
+        .'Existing files will not be overwritten.';
 
     /**
      * Filesystem instance
@@ -48,7 +48,13 @@ class DbConfigCommand extends Command
 
         $contents = $this->getSourceFile();
 
-        $this->createViewFromStub('filament.pages.' . Str::of($this->argument('name'))->headline()->lower()->slug() . '-settings');
+        $this->createViewFromStub('filament.pages.'.Str::of($this->argument('name'))->headline()->lower()->slug().'-settings');
+
+        if ($contents === false) {
+            $this->warn("Could not build source file contents for {$path}");
+
+            return;
+        }
 
         if (! $this->files->exists($path)) {
             $this->files->put($path, $contents);
@@ -66,10 +72,10 @@ class DbConfigCommand extends Command
     public function createViewFromStub(string $viewName): void
     {
         // Define the path to the view stub.
-        $viewStubPath = __DIR__ . '/../../stubs/view.stub';
+        $viewStubPath = __DIR__.'/../../stubs/view.stub';
 
         // Define the path to the new view file.
-        $newViewPath = \resource_path('views/' . str_replace('.', '/', $viewName) . '.blade.php');
+        $newViewPath = \resource_path('views/'.str_replace('.', '/', $viewName).'.blade.php');
 
         if ($this->files->exists($newViewPath)) {
             $this->warn("File : {$newViewPath} already exists");
@@ -80,6 +86,12 @@ class DbConfigCommand extends Command
         // Read the contents of the view stub.
         $viewStubContents = file_get_contents($viewStubPath);
 
+        if ($viewStubContents === false) {
+            $this->warn("Unable to read view stub at {$viewStubPath}");
+
+            return;
+        }
+
         // Replace any variables in the stub contents.
         // In this example, we're replacing a variable named 'VIEW_NAME'.
         $viewContents = str_replace('$VIEW_NAME$', $viewName, $viewStubContents);
@@ -87,8 +99,8 @@ class DbConfigCommand extends Command
         // Create the directory for the new view file, if it doesn't already exist.
         $this->makeDirectory(dirname($newViewPath));
 
-        // Write the view contents to the new view file.
-        file_put_contents($newViewPath, $viewContents);
+        // Write the view contents to the new view file using the Filesystem API.
+        $this->files->put($newViewPath, $viewContents);
 
         $this->info("View file : {$newViewPath} created");
     }
@@ -98,7 +110,7 @@ class DbConfigCommand extends Command
      */
     public function getStubPath(): string
     {
-        return __DIR__ . '/../../stubs/page.stub';
+        return __DIR__.'/../../stubs/page.stub';
     }
 
     /**
@@ -112,7 +124,7 @@ class DbConfigCommand extends Command
 
         return [
             'TITLE' => Str::headline($singularClassName),
-            'PANEL' => $this->argument('panel') ? ucfirst($this->argument('panel')) . '\\' : '',
+            'PANEL' => $this->argument('panel') ? ucfirst($this->argument('panel')).'\\' : '',
             'CLASS_NAME' => $singularClassName,
             'SETTING_NAME' => Str::of($this->argument('name'))->headline()->lower()->slug(),
         ];
@@ -132,7 +144,6 @@ class DbConfigCommand extends Command
      * Replace the stub variables(key) with the desire value
      *
      * @param  array<string,string>  $stubVariables
-     * @return string|false
      */
     public function getStubContents(string $stub, array $stubVariables = []): string|false
     {
@@ -143,7 +154,7 @@ class DbConfigCommand extends Command
         }
 
         foreach ($stubVariables as $search => $replace) {
-            $contents = str_replace('$' . $search . '$', $replace, $contents);
+            $contents = str_replace('$'.$search.'$', $replace, $contents);
         }
 
         return $contents;
@@ -155,9 +166,9 @@ class DbConfigCommand extends Command
     public function getSourceFilePath(): string
     {
         $panel = $this->argument('panel');
-        $panelPrefix = $panel ? ucfirst($panel) . '\\' : '';
+        $panelPrefix = $panel ? ucfirst($panel).'\\' : '';
 
-        $path = \base_path('app\\Filament\\' . $panelPrefix . 'Pages') . '\\' . $this->getSingularClassName($this->argument('name')) . 'Settings.php';
+        $path = \base_path('app\\Filament\\'.$panelPrefix.'Pages').'\\'.$this->getSingularClassName($this->argument('name')).'Settings.php';
 
         return str_replace('\\', '/', $path);
     }
