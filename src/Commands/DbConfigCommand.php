@@ -168,6 +168,8 @@ class DbConfigCommand extends Command
 
     /**
      * Get available Filament panels from the app/Filament directory
+     *
+     * @return array<int,string> List of available panel names
      */
     protected function getAvailablePanels(): array
     {
