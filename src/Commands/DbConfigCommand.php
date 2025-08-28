@@ -26,11 +26,11 @@ class DbConfigCommand extends Command
     public $signature = 'make:db-config {name?} {panel?}';
 
     public $description = 'Create a new Filament settings Page class and its Blade view. '
-        .'Usage: php artisan make:db-config [name?] [panel?] — generates '
-        .'app/Filament/{Panel}/Pages/{Name}Settings.php and '
-        .'resources/views/filament/config-pages/{name}.blade.php. '
-        .'If arguments are not provided, you will be prompted interactively. '
-        .'Existing files will not be overwritten.';
+        . 'Usage: php artisan make:db-config [name?] [panel?] — generates '
+        . 'app/Filament/{Panel}/Pages/{Name}Settings.php and '
+        . 'resources/views/filament/config-pages/{name}.blade.php. '
+        . 'If arguments are not provided, you will be prompted interactively. '
+        . 'Existing files will not be overwritten.';
 
     /**
      * @var array<string>
@@ -84,7 +84,7 @@ class DbConfigCommand extends Command
 
         $contents = $this->getSourceFile();
 
-        $this->createViewFromStub('filament.pages.'.Str::of($name)->headline()->lower()->slug().'-settings');
+        $this->createViewFromStub('filament.pages.' . Str::of($name)->headline()->lower()->slug() . '-settings');
 
         if ($contents === false) {
             $this->warn("Could not build source file contents for {$path}");
@@ -186,10 +186,10 @@ class DbConfigCommand extends Command
     public function createViewFromStub(string $viewName): void
     {
         // Define the path to the view stub.
-        $viewStubPath = __DIR__.'/../../stubs/view.stub';
+        $viewStubPath = __DIR__ . '/../../stubs/view.stub';
 
         // Define the path to the new view file.
-        $newViewPath = \resource_path('views/'.str_replace('.', '/', $viewName).'.blade.php');
+        $newViewPath = \resource_path('views/' . str_replace('.', '/', $viewName) . '.blade.php');
 
         if ($this->files->exists($newViewPath)) {
             $this->warn("File : {$newViewPath} already exists");
@@ -224,7 +224,7 @@ class DbConfigCommand extends Command
      */
     public function getStubPath(): string
     {
-        return __DIR__.'/../../stubs/page.stub';
+        return __DIR__ . '/../../stubs/page.stub';
     }
 
     /**
@@ -241,7 +241,7 @@ class DbConfigCommand extends Command
 
         return [
             'TITLE' => Str::headline($singularClassName),
-            'PANEL' => $panel ? ucfirst($panel).'\\' : '',
+            'PANEL' => $panel ? ucfirst($panel) . '\\' : '',
             'CLASS_NAME' => $singularClassName,
             'SETTING_NAME' => Str::of($name)->headline()->lower()->slug(),
         ];
@@ -252,7 +252,7 @@ class DbConfigCommand extends Command
      *
      * @return string|false The generated source contents or false on failure
      */
-    public function getSourceFile(): string|false
+    public function getSourceFile(): string | false
     {
         return $this->getStubContents($this->getStubPath(), $this->getStubVariables());
     }
@@ -262,7 +262,7 @@ class DbConfigCommand extends Command
      *
      * @param  array<string,string>  $stubVariables
      */
-    public function getStubContents(string $stub, array $stubVariables = []): string|false
+    public function getStubContents(string $stub, array $stubVariables = []): string | false
     {
         $contents = file_get_contents($stub);
 
@@ -271,7 +271,7 @@ class DbConfigCommand extends Command
         }
 
         foreach ($stubVariables as $search => $replace) {
-            $contents = str_replace('$'.$search.'$', $replace, $contents);
+            $contents = str_replace('$' . $search . '$', $replace, $contents);
         }
 
         return $contents;
@@ -285,9 +285,9 @@ class DbConfigCommand extends Command
         $name = $this->getNameArgument();
         $panel = $this->getPanelArgument();
 
-        $panelPrefix = $panel ? ucfirst($panel).'\\' : '';
+        $panelPrefix = $panel ? ucfirst($panel) . '\\' : '';
 
-        $path = \base_path('app\\Filament\\'.$panelPrefix.'Pages').'\\'.$this->getSingularClassName($name).'Settings.php';
+        $path = \base_path('app\\Filament\\' . $panelPrefix . 'Pages') . '\\' . $this->getSingularClassName($name) . 'Settings.php';
 
         return str_replace('\\', '/', $path);
     }
