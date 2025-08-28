@@ -1,5 +1,11 @@
 # DB Config – Lightweight settings & content manager for Filament
 
+<p align="center" class="filament-hidden">
+<a href="https://packagist.org/packages/inerba/filament-db-config"><img src="https://img.shields.io/packagist/v/inerba/filament-db-config" alt="Latest Stable Version"></a>
+<a href="https://packagist.org/packages/inerba/filament-db-config"><img src="https://img.shields.io/packagist/l/inerba/filament-db-config" alt="License"></a>
+<a href="https://packagist.org/packages/inerba/filament-db-config"><img src="https://img.shields.io/packagist/dt/inerba/filament-db-config" alt="Total Downloads"></a>
+</p>
+
 DB Config is a Filament plugin that provides a simple, database-backed key/value store for **application settings** and **editable content**.  
 It’s ideal both for storing configuration (like site name, contact info, labels) and for managing page sections (homepage hero, landing blocks, about text, etc.) without the need for a full CMS.
 
@@ -11,7 +17,7 @@ It’s ideal both for storing configuration (like site name, contact info, label
 It provides a clean set of simple helpers for reading and writing values, with transparent caching under the hood, and persists data as JSON in a dedicated table.  
 It is framework-friendly and requires no custom Eloquent models in your app.
 
-<img width="1280" height="640" alt="filament-db-config" src="https://raw.githubusercontent.com/inerba/filament-db-config/refs/heads/main/screenshot.jpg" />
+![screenshot](./.github/resources/screenshot.jpg)
 
 > You may use **any Filament form fields or layout components - including third-party ones -** to build your settings and content pages, giving you full flexibility in how data is structured and edited.
 
