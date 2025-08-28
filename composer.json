@@ -1,9 +1,10 @@
 {
     "name": "inerba/filament-db-config",
-    "description": "DB Config – A Filament plugin that provides a database-backed key/value store for application settings, with caching and easy settings page generation.",
+    "description": "A Filament plugin for database-backed application settings and editable content, with caching and easy page generation.",
     "keywords": [
         "filament",
         "filament-plugin",
+        "laravel-filament",
         "laravel"
     ],
     "homepage": "https://github.com/inerba/filament-db-config",
@@ -14,7 +15,7 @@
     "license": "MIT",
     "authors": [
         {
-            "name": "Francesco",
+            "name": "Francesco Apruzzese",
             "email": "inerba@gmail.com",
             "role": "Developer"
         }
@@ -25,14 +26,7 @@
         "spatie/laravel-package-tools": "^1.15.0"
     },
     "require-dev": {
-        "larastan/larastan": "^3.6",
-        "laravel/pint": "^1.14",
-        "nunomaduro/collision": "^8",
-        "orchestra/testbench": "^9.0",
-        "pestphp/pest": "^2.0",
-        "pestphp/pest-plugin-arch": "^2.0",
-        "pestphp/pest-plugin-laravel": "^2.0",
-        "spatie/laravel-ray": "^1.35"
+        "laravel/pint": "^1.14"
     },
     "autoload": {
         "files": [
@@ -49,18 +43,7 @@
         }
     },
     "scripts": {
-        "post-autoload-dump": "@php ./vendor/bin/testbench package:discover --ansi",
-        "analyse": "vendor/bin/phpstan analyse",
-        "test": "vendor/bin/pest",
-        "test-coverage": "vendor/bin/pest --coverage",
-        "format": "vendor/bin/pint"
-    },
-    "config": {
-        "sort-packages": true,
-        "allow-plugins": {
-            "pestphp/pest-plugin": true,
-            "phpstan/extension-installer": true
-        }
+        "pint": "vendor/bin/pint"
     },
     "extra": {
         "laravel": {
@@ -72,6 +55,5 @@
             }
         }
     },
-    "minimum-stability": "dev",
     "prefer-stable": true
 }
