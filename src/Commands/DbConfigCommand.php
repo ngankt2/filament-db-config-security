@@ -2,11 +2,20 @@
 
 namespace Inerba\DbConfig\Commands;
 
+use Filament\Facades\Filament;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Pluralizer;
 use Illuminate\Support\Str;
+use Symfony\Component\Console\Attribute\AsCommand;
 
+use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\suggest;
+use function Laravel\Prompts\text;
+
+#[AsCommand(name: 'make:db-config', aliases: [
+    'db-config',
+])]
 /**
  * @method mixed argument(string|null $key = null)
  * @method void info(string $message)
@@ -14,18 +23,41 @@ use Illuminate\Support\Str;
  */
 class DbConfigCommand extends Command
 {
-    public $signature = 'make:db-config {name} {panel?}';
+    public $signature = 'make:db-config {name?} {panel?}';
 
     public $description = 'Create a new Filament settings Page class and its Blade view. '
-        .'Usage: php artisan make:db-config {name} {panel?} — generates '
+        .'Usage: php artisan make:db-config [name?] [panel?] — generates '
         .'app/Filament/{Panel}/Pages/{Name}Settings.php and '
         .'resources/views/filament/config-pages/{name}.blade.php. '
+        .'If arguments are not provided, you will be prompted interactively. '
         .'Existing files will not be overwritten.';
+
+    /**
+     * @var array<string>
+     */
+    protected $aliases = [
+        'db-config',
+    ];
 
     /**
      * Filesystem instance
      */
     protected Filesystem $files;
+
+    /**
+     * Cached name argument
+     */
+    protected ?string $cachedName = null;
+
+    /**
+     * Cached panel argument
+     */
+    protected ?string $cachedPanel = null;
+
+    /**
+     * Whether panel argument has been cached
+     */
+    protected bool $panelCached = false;
 
     /**
      * Create a new command instance.
@@ -42,13 +74,17 @@ class DbConfigCommand extends Command
      */
     public function handle(): void
     {
+        // Collect input interactively if not provided
+        $name = $this->getNameArgument();
+        $panel = $this->getPanelArgument();
+
         $path = $this->getSourceFilePath();
 
         $this->makeDirectory(dirname($path));
 
         $contents = $this->getSourceFile();
 
-        $this->createViewFromStub('filament.pages.'.Str::of($this->argument('name'))->headline()->lower()->slug().'-settings');
+        $this->createViewFromStub('filament.pages.'.Str::of($name)->headline()->lower()->slug().'-settings');
 
         if ($contents === false) {
             $this->warn("Could not build source file contents for {$path}");
@@ -62,6 +98,82 @@ class DbConfigCommand extends Command
         } else {
             $this->warn("File : {$path} already exits");
         }
+    }
+
+    /**
+     * Get the name argument interactively if not provided
+     */
+    protected function getNameArgument(): string
+    {
+        if ($this->cachedName !== null) {
+            return $this->cachedName;
+        }
+
+        $name = $this->argument('name');
+
+        if (! $name) {
+            if ($this->option('no-interaction')) {
+                $this->error('The name argument is required when using --no-interaction flag.');
+                exit(1);
+            }
+
+            $name = text(
+                label: 'What is the name of the settings page?',
+                placeholder: 'E.g. Site, General, Mail',
+                hint: 'This will generate a {Name}Settings page class.',
+                required: true
+            );
+        }
+
+        return $this->cachedName = $name;
+    }
+
+    /**
+     * Get the panel argument interactively if not provided
+     */
+    protected function getPanelArgument(): ?string
+    {
+        if ($this->panelCached) {
+            return $this->cachedPanel;
+        }
+
+        $panel = $this->argument('panel');
+
+        if (! $panel && ! $this->option('no-interaction')) {
+            $availablePanels = $this->getAvailablePanels();
+
+            if (count($availablePanels) < 2) {
+                $this->panelCached = true;
+
+                return $this->cachedPanel = null;
+            }
+
+            $panel = suggest(
+                label: 'Which Filament panel should this settings page be created for?',
+                options: $availablePanels,
+                placeholder: 'Leave empty for default panel',
+                hint: 'This will determine the directory structure for your settings page.'
+            );
+
+            // If user pressed enter without selecting anything, return null
+            if (empty($panel)) {
+                $panel = null;
+            }
+        }
+
+        $this->panelCached = true;
+
+        return $this->cachedPanel = $panel;
+    }
+
+    /**
+     * Get available Filament panels from the app/Filament directory
+     */
+    protected function getAvailablePanels(): array
+    {
+        $panels = Filament::getPanels();
+
+        return array_keys($panels);
     }
 
     /**
@@ -120,13 +232,16 @@ class DbConfigCommand extends Command
      */
     public function getStubVariables(): array
     {
-        $singularClassName = $this->getSingularClassName((string) $this->argument('name'));
+        $name = $this->getNameArgument();
+        $panel = $this->getPanelArgument();
+
+        $singularClassName = $this->getSingularClassName($name);
 
         return [
             'TITLE' => Str::headline($singularClassName),
-            'PANEL' => $this->argument('panel') ? ucfirst($this->argument('panel')).'\\' : '',
+            'PANEL' => $panel ? ucfirst($panel).'\\' : '',
             'CLASS_NAME' => $singularClassName,
-            'SETTING_NAME' => Str::of($this->argument('name'))->headline()->lower()->slug(),
+            'SETTING_NAME' => Str::of($name)->headline()->lower()->slug(),
         ];
     }
 
@@ -165,10 +280,12 @@ class DbConfigCommand extends Command
      */
     public function getSourceFilePath(): string
     {
-        $panel = $this->argument('panel');
+        $name = $this->getNameArgument();
+        $panel = $this->getPanelArgument();
+
         $panelPrefix = $panel ? ucfirst($panel).'\\' : '';
 
-        $path = \base_path('app\\Filament\\'.$panelPrefix.'Pages').'\\'.$this->getSingularClassName($this->argument('name')).'Settings.php';
+        $path = \base_path('app\\Filament\\'.$panelPrefix.'Pages').'\\'.$this->getSingularClassName($name).'Settings.php';
 
         return str_replace('\\', '/', $path);
     }
@@ -192,5 +309,21 @@ class DbConfigCommand extends Command
         }
 
         return $path;
+    }
+
+    protected function askToStar(): void
+    {
+        if ($this->option('no-interaction')) {
+            return;
+        }
+
+        if (! confirm(
+            label: 'All done! Would you like to show some love by starring the DB Config repo on GitHub?',
+            default: true,
+        )) {
+            return;
+        }
+
+        $this->openUrlInBrowser('https://github.com/inerba/filament-db-config');
     }
 }
