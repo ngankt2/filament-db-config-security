@@ -4,6 +4,11 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Inerba\DbConfig\DbConfig;
 
+beforeEach(function () {
+    $migration = include __DIR__ . '/../../database/migrations/create_db_config_table.php.stub';
+    $migration->up();
+});
+
 // Test per il set e get di un valore semplice
 it('can set and get a simple value', function () {
     DbConfig::set('website.site_name', 'My Awesome Site');
