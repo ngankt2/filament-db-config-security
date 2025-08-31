@@ -31,7 +31,6 @@ It is framework-friendly and requires no custom Eloquent models in your app.
   - [Why use DB Config when Spatie Settings already exists?](#why-use-db-config-when-spatie-settings-already-exists)
   - [Requirements](#requirements)
   - [Installation](#installation)
-  - [Installation](#installation-1)
   - [Configuration](#configuration)
   - [Scaffolding \& Filament integration](#scaffolding--filament-integration)
   - [Read \& write values](#read--write-values)
@@ -88,15 +87,13 @@ Choose **Spatie Laravel Settings Plugin** if you need **strict typing, validatio
 
 ## Installation
 
-## Installation
-
-1.  **Install the package** via Composer:
+1. **Install the package** via Composer:
 
     ```bash
     composer require inerba/filament-db-config
     ```
 
-2.  **Publish the assets** (Configuration and Migration):
+2. **Publish the assets** (Configuration and Migration):
 
     ```bash
     php artisan vendor:publish --tag="db-config-migrations" --tag="db-config-config"
@@ -106,7 +103,7 @@ Choose **Spatie Laravel Settings Plugin** if you need **strict typing, validatio
     * `config/db-config.php`: The configuration file where you can customize the package's behavior (like changing the table name).
     * A migration file in `database/migrations/`: This file contains the instructions to create the table that will store your settings.
 
-3.  **Run the migration**:
+3. **Run the migration**:
 
     ```bash
     php artisan migrate
