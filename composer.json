@@ -26,7 +26,9 @@
         "spatie/laravel-package-tools": "^1.15.0"
     },
     "require-dev": {
-        "laravel/pint": "^1.14"
+        "laravel/pint": "^1.14",
+        "pestphp/pest": "^4.0",
+        "orchestra/testbench": "^9.15"
     },
     "autoload": {
         "files": [
@@ -55,5 +57,10 @@
             }
         }
     },
-    "prefer-stable": true
+    "prefer-stable": true,
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
 }

@@ -26,39 +26,50 @@ class TestCase extends Orchestra
     {
         parent::setUp();
 
-        Factory::guessFactoryNamesUsing(
-            fn (string $modelName) => 'Inerba\\DbConfig\\Database\\Factories\\' . class_basename($modelName) . 'Factory'
-        );
+        // Factory::guessFactoryNamesUsing(
+        //     fn (string $modelName) => 'Inerba\\DbConfig\\Database\\Factories\\' . class_basename($modelName) . 'Factory'
+        // );
+
+        // Eseguiamo la migrazione del pacchetto prima di ogni test.
+        // Questo assicura un database pulito per ogni scenario.
+        $migration = include __DIR__ . '/../database/migrations/create_db_config_table.php.stub';
+        $migration->up();
     }
 
     protected function getPackageProviders($app)
     {
         return [
-            ActionsServiceProvider::class,
-            BladeCaptureDirectiveServiceProvider::class,
-            BladeHeroiconsServiceProvider::class,
-            BladeIconsServiceProvider::class,
-            FilamentServiceProvider::class,
-            FormsServiceProvider::class,
-            InfolistsServiceProvider::class,
-            LivewireServiceProvider::class,
-            NotificationsServiceProvider::class,
-            SpatieLaravelSettingsPluginServiceProvider::class,
-            SpatieLaravelTranslatablePluginServiceProvider::class,
-            SupportServiceProvider::class,
-            TablesServiceProvider::class,
-            WidgetsServiceProvider::class,
+            // ActionsServiceProvider::class,
+            // BladeCaptureDirectiveServiceProvider::class,
+            // BladeHeroiconsServiceProvider::class,
+            // BladeIconsServiceProvider::class,
+            // FilamentServiceProvider::class,
+            // FormsServiceProvider::class,
+            // InfolistsServiceProvider::class,
+            // LivewireServiceProvider::class,
+            // NotificationsServiceProvider::class,
+            // SpatieLaravelSettingsPluginServiceProvider::class,
+            // SpatieLaravelTranslatablePluginServiceProvider::class,
+            // SupportServiceProvider::class,
+            // TablesServiceProvider::class,
+            // WidgetsServiceProvider::class,
             DbConfigServiceProvider::class,
         ];
     }
 
+    /**
+     * Definisci l'ambiente di test.
+     *
+     * @param  \Illuminate\Foundation\Application  $app
+     */
     public function getEnvironmentSetUp($app)
     {
-        config()->set('database.default', 'testing');
-
-        /*
-        $migration = include __DIR__.'/../database/migrations/create_db_config_table.php.stub';
-        $migration->up();
-        */
+        // Usiamo un database SQLite in memoria: è velocissimo e non lascia file spazzatura.
+        $app['config']->set('database.default', 'testing');
+        $app['config']->set('database.connections.testing', [
+            'driver' => 'sqlite',
+            'database' => ':memory:',
+            'prefix' => '',
+        ]);
     }
 }
