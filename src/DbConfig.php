@@ -18,9 +18,15 @@ class DbConfig
     {
         [$group, $setting, $subKey] = static::parseKey($key);
 
-        $cachename = "db-config.{$group}.{$setting}";
+        $cacheKey = static::getCacheKey($group, $setting);
+        $cacheTtl = config('db-config.cache.ttl');
 
-        $data = Cache::rememberForever($cachename, fn () => static::fetchConfig($group, $setting));
+        $callback = fn () => static::fetchConfig($group, $setting);
+
+        // Use remember() with TTL if provided, otherwise rememberForever()
+        $data = ($cacheTtl > 0)
+            ? Cache::remember($cacheKey, $cacheTtl * 60, $callback)
+            : Cache::rememberForever($cacheKey, $callback);
 
         $value = data_get($data, $subKey, $default);
 
@@ -37,9 +43,9 @@ class DbConfig
     {
         [$group, $setting] = static::parseKey($key);
 
-        $cachename = "db-config.{$group}.{$setting}";
+        $cacheKey = static::getCacheKey($group, $setting);
 
-        Cache::forget($cachename);
+        Cache::forget($cacheKey);
 
         static::storeConfig($group, $setting, $value);
     }
@@ -54,7 +60,9 @@ class DbConfig
     {
         $settings = [];
 
-        DB::table('db_config')->where('group', $group)->get()->each(function (\stdClass $setting) use (&$settings) {
+        $tableName = config('db-config.table_name', 'db_config');
+
+        DB::table($tableName)->where('group', $group)->get()->each(function (\stdClass $setting) use (&$settings) {
             $settings[$setting->key] = json_decode($setting->settings, true);
         });
 
@@ -82,8 +90,10 @@ class DbConfig
      */
     protected static function fetchConfig(string $group, string $setting): array
     {
+        $tableName = config('db-config.table_name', 'db_config');
+
         /** @var \stdClass|null $item */
-        $item = DB::table('db_config')
+        $item = DB::table($tableName)
             ->where('group', $group)
             ->where('key', $setting)
             ->first();
@@ -99,7 +109,9 @@ class DbConfig
 
     protected static function storeConfig(string $group, string $setting, mixed $value): void
     {
-        DB::table('db_config')
+        $tableName = config('db-config.table_name', 'db_config');
+
+        DB::table($tableName)
             ->updateOrInsert(
                 [
                     'group' => $group,
@@ -109,5 +121,12 @@ class DbConfig
                     'settings' => json_encode($value),
                 ]
             );
+    }
+
+    protected static function getCacheKey(string $group, string $setting): string
+    {
+        $prefix = config('db-config.cache.prefix', 'db-config');
+
+        return "{$prefix}.{$group}.{$setting}";
     }
 }
