@@ -34,11 +34,11 @@ class DbConfigServiceProvider extends PackageServiceProvider
                     ->askToStarRepoOnGitHub('inerba/db-config');
             });
 
-        //        $configFileName = $package->shortName();
-        //
-        //        if (file_exists($package->basePath("/../config/{$configFileName}.php"))) {
-        //            $package->hasConfigFile();
-        //        }
+        $configFileName = $package->shortName();
+
+        if (file_exists($package->basePath("/../config/{$configFileName}.php"))) {
+            $package->hasConfigFile();
+        }
 
         if (file_exists($package->basePath('/../database/migrations'))) {
             $package->hasMigrations($this->getMigrations());
