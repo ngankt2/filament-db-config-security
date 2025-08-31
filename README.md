@@ -32,14 +32,14 @@ It is framework-friendly and requires no custom Eloquent models in your app.
   - [Requirements](#requirements)
   - [Installation](#installation)
   - [Configuration](#configuration)
-  - [Scaffolding \& Filament integration](#scaffolding--filament-integration)
+  - [Generate a settings page](#generate-a-settings-page)
   - [Read \& write values](#read--write-values)
-    - [Read a value (helper):](#read-a-value-helper)
+    - [Read a value (helper)](#read-a-value-helper)
     - [Blade directive](#blade-directive)
-    - [Read a value (class):](#read-a-value-class)
-    - [Write a value:](#write-a-value)
-    - [Read an entire group as associative array:](#read-an-entire-group-as-associative-array)
-    - [Facade (optional):](#facade-optional)
+    - [Read a value (class)](#read-a-value-class)
+    - [Write a value](#write-a-value)
+    - [Read an entire group as associative array](#read-an-entire-group-as-associative-array)
+    - [Facade (optional)](#facade-optional)
   - [How it works](#how-it-works)
   - [Database schema](#database-schema)
   - [Working with nested values](#working-with-nested-values)
@@ -50,6 +50,7 @@ It is framework-friendly and requires no custom Eloquent models in your app.
   - [Testing](#testing)
   - [Versioning](#versioning)
   - [License](#license)
+  
 </div>
 
 ## Why use DB Config when Spatie Settings already exists?
@@ -72,9 +73,9 @@ The table below highlights the key differences so you can choose the right tool 
 
 Choose **DB Config** if you want:
 
-* A **lightweight key/value system** for both settings and content.
-* Minimal setup, no boilerplate code.
-* Flexibility to manage simple settings and even **page content** directly in Filament.
+- A **lightweight key/value system** for both settings and content.
+- Minimal setup, no boilerplate code.
+- Flexibility to manage simple settings and even **page content** directly in Filament.
 
 Choose **Spatie Laravel Settings Plugin** if you need **strict typing, validation, and DTOs** as part of your domain logic.
 
@@ -100,8 +101,8 @@ Choose **Spatie Laravel Settings Plugin** if you need **strict typing, validatio
     ```
 
     **Why is this step important?** This command copies two essential files into your project:
-    * `config/db-config.php`: The configuration file where you can customize the package's behavior (like changing the table name).
-    * A migration file in `database/migrations/`: This file contains the instructions to create the table that will store your settings.
+    - `config/db-config.php`: The configuration file where you can customize the package's behavior (like changing the table name).
+    - A migration file in `database/migrations/`: This file contains the instructions to create the table that will store your settings.
 
 3. **Run the migration**:
 
@@ -123,6 +124,7 @@ By default, settings are stored in the db_config table. You can change this by m
 // config/db-config.php
 'table_name' => 'my_settings_table',
 ```
+
 Cache Behavior
 The package uses caching to minimize database queries. You can fine-tune the cache settings.
 
@@ -139,12 +141,9 @@ ttl: Defines the cache lifetime in minutes. By default, it's null, which means s
 ],
 ```
 
-
-## Scaffolding & Filament integration
+## Generate a settings page
 
 DB Config ships with an Artisan generator and an abstract Page class to quickly scaffold Filament settings pages.
-
-**Generate a settings page**
 
 ```bash
 php artisan make:db-config {name} {panel?}
@@ -210,7 +209,7 @@ All changes are saved automatically in the `db_config` table and cached for fast
 
 For programmatic access, the package also provides simple helpers and static methods:
 
-### Read a value (helper):
+### Read a value (helper)
 
 ```php
 db_config('website.site_name', 'Default Name');
@@ -224,33 +223,33 @@ You can also access values directly inside Blade templates:
 @db_config('website.site_name', 'Default Name')
 ```
 
-### Read a value (class):
+### Read a value (class)
 
 ```php
 \Inerba\DbConfig\DbConfig::get('website.site_name', 'Default Name');
 ```
 
-### Write a value:
+### Write a value
 
 ```php
 \Inerba\DbConfig\DbConfig::set('website.site_name', 'Acme Inc.');
 ```
 
-### Read an entire group as associative array:
+### Read an entire group as associative array
 
 ```php
 \Inerba\DbConfig\DbConfig::getGroup('website');
 // => [ 'site_name' => 'Acme Inc.', 'contact' => ['email' => 'info@acme.test'] ]
 ```
 
-### Facade (optional):
+### Facade (optional)
 
 ```php
 \Inerba\DbConfig\Facades\DbConfig::get('website.site_name');
 ```
-> Note: these values are not part of Laravel’s config() cache.
-Always use db_config() or @db_config instead of config().
 
+> Note: these values are **not** part of Laravel’s config() cache.
+Always use db_config() or @db_config instead of config().
 > The `db_config()` helper is auto-registered by the package and is the recommended way to read values in application code.
 
 ## How it works
@@ -259,9 +258,10 @@ Settings are organized by a two-part key: `group.setting`, with optional nested 
 
 Under the hood:
 
-- Settings are stored in a single row per `(group, key)` with the JSON payload in the `settings` column.
-- Reads are cached forever under the cache key `db-config.{group}.{setting}`.
-- Writes clear the corresponding cache entry to keep reads fresh.
+- **Database Storage:** Settings are stored in a database table (by default `db_config`), with one row per `(group, key)`. The actual settings are stored as a JSON payload in the `settings` column.
+- **Intelligent Caching:** Reads are cached to ensure high performance. By default, they are cached forever, but you can configure a specific TTL (Time To Live) in the config file.
+- **Configurable Cache Keys:** The cache key is generated using a configurable prefix (`db-config` by default) followed by the group and setting (e.g., `db-config.website.site_name`).
+- **Automatic Cache Invalidation:** Writes automatically clear the corresponding cache entry, ensuring that data always stays fresh.
 
 ## Database schema
 
@@ -301,9 +301,12 @@ db_config('profile.preferences.timezone', 'UTC'); // 'UTC'
 
 ## Caching behavior
 
-- Reads are cached forever per `(group, setting)` to minimize database traffic.
-- `DbConfig::set()` automatically clears the cache for the affected `(group, setting)` pair.
-- When debugging, you can clear the framework cache (`php artisan cache:clear`) to reset all cached values.
+To minimize database traffic, DB Config comes with a powerful caching layer. Here’s how it works:
+
+- **Default Behavior:** By default, settings are cached **forever**. The first time a setting is read, it's fetched from the database and stored in the cache. All subsequent reads will hit the cache directly, making them incredibly fast.
+- **Automatic Cache Invalidation:** When you use `DbConfig::set()` or the "Save" action on a settings page, the cache for the affected `(group, setting)` pair is automatically cleared. This ensures that the next read will fetch the fresh value from the database.
+- **Configurable TTL:** You can change the default behavior by setting a `ttl` (Time To Live) in minutes in the `config/db-config.php` file. If a TTL is set, the package will use a temporary cache that expires after the specified duration.
+- **Manual Cache Clearing:** When debugging, you can clear the entire framework cache using `php artisan cache:clear` to reset all cached settings.
 
 ## Return values and defaults
 
@@ -318,7 +321,8 @@ This package stores settings as JSON. Ensure your chosen database supports JSON 
 ## Security considerations
 
 > ⚠️ DB Config is a place for values you want admins to edit safely at runtime, not for infrastructure secrets (API keys, DB credentials).
-- Values are not encrypted by default. If you need encryption, apply it before using the package’s helpers to read or write values.
+
+Values are not encrypted by default. If you need encryption, apply it before using the package’s helpers to read or write values.
 
 ## Testing
 
@@ -327,11 +331,13 @@ This package comes with a full test suite powered by Pest. To run the tests, fir
 ```bash
 composer install
 ```
+
 Then, run the test suite from the root of the project:
 
 ```bash
 ./vendor/bin/pest
 ```
+
 The package also uses GitHub Actions to automatically run tests on every push and pull request, ensuring that the code remains stable and reliable.
 
 ## Versioning
