@@ -1,10 +1,11 @@
 # DB Config – Lightweight settings & content manager for Filament
 
+
 <p align="center" class="filament-hidden">
 
-[![Run Tests](https://github.com/inerba/filament-db-config/actions/workflows/tests.yml/badge.svg)](https://github.com/inerba/filament-db-config/actions/workflows/tests.yml)
 <a href="https://packagist.org/packages/inerba/filament-db-config"><img src="https://img.shields.io/packagist/v/inerba/filament-db-config" alt="Latest Stable Version"></a>
 <a href="https://packagist.org/packages/inerba/filament-db-config"><img src="https://img.shields.io/packagist/l/inerba/filament-db-config" alt="License"></a>
+<a href="https://github.com/inerba/filament-db-config/actions/workflows/tests.yaml"><img src="https://github.com/inerba/filament-db-config/actions/workflows/tests.yaml/badge.svg" alt="Run Tests"></a>
 <a href="https://packagist.org/packages/inerba/filament-db-config"><img src="https://img.shields.io/github/actions/workflow/status/inerba/filament-db-config/code-style.yml?branch=main&label=Code%20style&style=flat-square" alt="GitHub Workflow Status"></a>
 <a href="https://packagist.org/packages/inerba/filament-db-config"><img src="https://img.shields.io/packagist/dt/inerba/filament-db-config" alt="Total Downloads"></a>
 </p>
