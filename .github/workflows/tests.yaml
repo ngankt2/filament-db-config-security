@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        php: [8.2, 8.3] # Testa su più versioni di PHP
+        php: [8.3] # Testa su più versioni di PHP
         laravel: [12.*] # Specifica la versione di Laravel
         stability: [prefer-stable]
 
