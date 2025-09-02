@@ -9,10 +9,11 @@ use Inerba\DbConfig\Facades\DbConfig;
 use Livewire\Livewire;
 
 beforeEach(function () {
+    config(['session.driver' => 'array']);
+
     $migration = include __DIR__ . '/../../database/migrations/create_db_config_table.php.stub';
     $migration->up();
 
-    config(['session.driver' => 'array']);
 });
 
 class SettingsPageWithDefaults extends AbstractPageSettings
@@ -42,21 +43,18 @@ class SettingsPageWithDefaults extends AbstractPageSettings
 it('loads default data and merges correctly with database values', function () {
     Livewire::component('settings-page-with-defaults', SettingsPageWithDefaults::class);
 
-    // Share a proper ViewErrorBag with the view (avoid session-based initialization in CI)
-    $errors = new ViewErrorBag;
-    $errors->put('default', new MessageBag);
-    app('view')->share('errors', $errors);
-    // Alternatively: $this->withViewErrors([]);  // uses Laravel's testing helper
+    // Usa l'helper di TestCase per condividere gli errori con la view in modo corretto.
+    // Questo crea internamente un ViewErrorBag / MessageBag vuoto, evitando che Livewire
+    // trovi null quando scrive nel bag.
+    $this->withViewErrors(['default' => new MessageBag]);
 
     // SCENARIO 1: Nessun dato nel database.
     Livewire::test('settings-page-with-defaults')
         ->assertSet('data.name', 'Default Name')
         ->assertSet('data.value', 10);
 
-    // Re-share errors before a new Livewire test instance (defensive in CI)
-    $errors = new ViewErrorBag;
-    $errors->put('default', new MessageBag);
-    app('view')->share('errors', $errors);
+    // Riapplica gli errori prima di creare la nuova istanza Livewire (difensivo in CI).
+    $this->withViewErrors(['default' => new MessageBag]);
 
     // SCENARIO 2: Dati PARZIALI nel database.
     DbConfig::set('test-defaults.name', 'Database Name');
