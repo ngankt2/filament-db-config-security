@@ -13,10 +13,6 @@ beforeEach(function () {
     $migration->up();
 
     config(['session.driver' => 'array']);
-    session()->start();
-    $errors = new ViewErrorBag;
-    $errors->put('default', new MessageBag);
-    session()->put('errors', $errors);
 });
 
 class SettingsPageWithDefaults extends AbstractPageSettings
@@ -46,10 +42,21 @@ class SettingsPageWithDefaults extends AbstractPageSettings
 it('loads default data and merges correctly with database values', function () {
     Livewire::component('settings-page-with-defaults', SettingsPageWithDefaults::class);
 
+    // Share a proper ViewErrorBag with the view (avoid session-based initialization in CI)
+    $errors = new ViewErrorBag;
+    $errors->put('default', new MessageBag);
+    app('view')->share('errors', $errors);
+    // Alternatively: $this->withViewErrors([]);  // uses Laravel's testing helper
+
     // SCENARIO 1: Nessun dato nel database.
     Livewire::test('settings-page-with-defaults')
         ->assertSet('data.name', 'Default Name')
         ->assertSet('data.value', 10);
+
+    // Re-share errors before a new Livewire test instance (defensive in CI)
+    $errors = new ViewErrorBag;
+    $errors->put('default', new MessageBag);
+    app('view')->share('errors', $errors);
 
     // SCENARIO 2: Dati PARZIALI nel database.
     DbConfig::set('test-defaults.name', 'Database Name');

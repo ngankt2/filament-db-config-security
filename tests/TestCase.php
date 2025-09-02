@@ -17,6 +17,8 @@ use Filament\Panel;
 use Filament\Support\SupportServiceProvider;
 use Filament\Tables\TablesServiceProvider;
 use Filament\Widgets\WidgetsServiceProvider;
+use Illuminate\Support\MessageBag;
+use Illuminate\Support\ViewErrorBag;
 use Inerba\DbConfig\DbConfigServiceProvider;
 use Livewire\LivewireServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
@@ -71,5 +73,11 @@ class TestCase extends Orchestra
         // Use a fixed application key derived from SHA-256 for reproducible CI runs.
         // hash(..., true) returns 32 bytes which base64-encodes to a valid AES-256 key.
         $app['config']->set('app.key', 'base64:' . base64_encode(hash('sha256', 'filament-db-config-test-key', true)));
+
+        // Ensure a shared ViewErrorBag with a default MessageBag exists early in the
+        // application lifecycle so Livewire's validation helpers never receive null.
+        $errors = new ViewErrorBag;
+        $errors->put('default', new MessageBag);
+        $app['view']->share('errors', $errors);
     }
 }
