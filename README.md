@@ -40,6 +40,8 @@ It is framework-friendly and requires no custom Eloquent models in your app.
     - [Write a value](#write-a-value)
     - [Read an entire group as associative array](#read-an-entire-group-as-associative-array)
     - [Facade (optional)](#facade-optional)
+  - [Advanced usage](#advanced-usage)
+    - [Set Default Values](#set-default-values)
   - [How it works](#how-it-works)
   - [Database schema](#database-schema)
   - [Working with nested values](#working-with-nested-values)
@@ -188,7 +190,7 @@ Example page content (Filament schema):
 
 ```php
 use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Schema; // or import the correct Schema depending on your setup
+use Filament\Schemas\Schema;
 
 public function content(Schema $schema): Schema
 {
@@ -251,6 +253,50 @@ You can also access values directly inside Blade templates:
 > Note: these values are **not** part of Laravel’s config() cache.
 Always use db_config() or @db_config instead of config().
 > The `db_config()` helper is auto-registered by the package and is the recommended way to read values in application code.
+
+## Advanced usage
+
+### Set Default Values
+
+You can provide default values for your settings page. This is useful for pre-filling the form with sensible defaults when it's accessed for the first time. It guides the user by showing recommended settings, which they can then adjust or save directly to establish a working configuration without manual setup.
+
+To define default values, simply override the getDefaultData() method in your settings page class and return an array of key-value pairs.
+
+Example:
+
+```php
+    use Filament\Forms\Components\TextInput;
+    use Filament\Forms\Components\Toggle;
+    use Filament\Schemas\Schema;
+
+    /**
+     * Set the default values to pre-fill the form.
+     *
+     * @return array<string,mixed>
+     */
+    public function getDefaultData(): array
+    {
+        return [
+            'posts_per_page' => 10,
+            'allow_comments' => true,
+        ];
+    }
+
+    public function content(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                TextInput::make('posts_per_page')->required(),
+                Toggle::make('allow_comments'),
+            ])
+            ->statePath('data');
+    }
+}
+```
+
+When the settings page is loaded, the getDefaultData() method provides the initial values to populate the form fields. These defaults are only used if no value for a given field has been previously saved to the database.
+
+It's important to note that these default values are not persistent until the user explicitly clicks the "Save" button.
 
 ## How it works
 
