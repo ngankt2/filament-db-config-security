@@ -40,10 +40,11 @@ class SettingsPageWithDefaults extends AbstractPageSettings
 it('loads default data and merges correctly with database values', function () {
     Livewire::component('settings-page-with-defaults', SettingsPageWithDefaults::class);
 
-    $errors = session()->get('errors', new ViewErrorBag);
-    if ($errors->isEmpty()) {
-        $errors->put('default', new MessageBag);
-    }
+    // Ensure session contains a ViewErrorBag with a default MessageBag so Livewire validation
+    // doesn't end up trying to put null into the bag.
+    $errors = new ViewErrorBag;
+    $errors->put('default', new MessageBag);
+    session()->put('errors', $errors);
 
     // SCENARIO 1: Nessun dato nel database.
     Livewire::test('settings-page-with-defaults')
