@@ -11,6 +11,12 @@ use Livewire\Livewire;
 beforeEach(function () {
     $migration = include __DIR__ . '/../../database/migrations/create_db_config_table.php.stub';
     $migration->up();
+
+    config(['session.driver' => 'array']);
+    session()->start();
+    $errors = new ViewErrorBag;
+    $errors->put('default', new MessageBag);
+    session()->put('errors', $errors);
 });
 
 class SettingsPageWithDefaults extends AbstractPageSettings
@@ -38,13 +44,6 @@ class SettingsPageWithDefaults extends AbstractPageSettings
 }
 
 it('loads default data and merges correctly with database values', function () {
-    if (! session()->isStarted()) {
-        session()->start();
-    }
-    $errors = new ViewErrorBag;
-    $errors->put('default', new MessageBag);
-    session()->put('errors', $errors);
-
     Livewire::component('settings-page-with-defaults', SettingsPageWithDefaults::class);
 
     // SCENARIO 1: Nessun dato nel database.
