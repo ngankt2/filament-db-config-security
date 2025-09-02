@@ -30,19 +30,6 @@ class TestCase extends Orchestra
     protected function setUp(): void
     {
         parent::setUp();
-        // $migration = include __DIR__ . '/../database/migrations/create_db_config_table.php.stub';
-        // $migration->up();
-
-        // Ensure the shared "errors" view variable contains a default MessageBag
-        // Livewire expects a MessageBag when it re-shares errors during rendering.
-        $errors = new ViewErrorBag;
-        $errors->put('default', new \Illuminate\Support\MessageBag);
-        View::share('errors', $errors);
-
-        // Register a default Filament panel so Filament pages can render in tests.
-        $this->app->make(PanelRegistry::class)->register(
-            Panel::make()->id('default')->default(true),
-        );
     }
 
     protected function getPackageProviders($app)
@@ -78,6 +65,18 @@ class TestCase extends Orchestra
             'database' => ':memory:',
             'prefix' => '',
         ]);
+
+        // Ensure the shared "errors" view variable contains a default MessageBag
+        // Livewire expects a MessageBag when it re-shares errors during rendering.
+        $errors = new ViewErrorBag;
+        $errors->put('default', new \Illuminate\Support\MessageBag);
+        // Share on the view factory so it's available early in the request lifecycle
+        $app['view']->share('errors', $errors);
+
+        // Register a default Filament panel so Filament pages can render in tests.
+        $app->make(PanelRegistry::class)->register(
+            Panel::make()->id('default')->default(true),
+        );
 
         // Set a dummy application key so encryption / cookie signing works in tests.
         $app['config']->set('app.key', 'base64:' . base64_encode(random_bytes(32)));
