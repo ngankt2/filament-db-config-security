@@ -36,5 +36,17 @@ jobs:
           composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:^10.0" --no-interaction --no-update
           composer update --${{ matrix.stability }} --prefer-dist --no-interaction
 
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: |
+            vendor
+            ~/.composer/cache
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
       - name: Run tests
+        env:
+          XDEBUG_MODE: coverage
         run: vendor/bin/pest --coverage # Esegui i test e genera il report di coverage

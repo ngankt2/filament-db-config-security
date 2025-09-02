@@ -14,7 +14,6 @@ use Filament\Forms\FormsServiceProvider;
 use Filament\Infolists\InfolistsServiceProvider;
 use Filament\Notifications\NotificationsServiceProvider;
 use Filament\Panel;
-use Filament\PanelRegistry;
 use Filament\Support\SupportServiceProvider;
 use Filament\Tables\TablesServiceProvider;
 use Filament\Widgets\WidgetsServiceProvider;
@@ -74,11 +73,12 @@ class TestCase extends Orchestra
         $app['view']->share('errors', $errors);
 
         // Register a default Filament panel so Filament pages can render in tests.
-        $app->make(PanelRegistry::class)->register(
+        Filament::registerPanel(
             Panel::make()->id('default')->default(true),
         );
 
-        // Set a dummy application key so encryption / cookie signing works in tests.
-        $app['config']->set('app.key', 'base64:' . base64_encode(random_bytes(32)));
+        // Use a fixed application key derived from SHA-256 for reproducible CI runs.
+        // hash(..., true) returns 32 bytes which base64-encodes to a valid AES-256 key.
+        $app['config']->set('app.key', 'base64:' . base64_encode(hash('sha256', 'filament-db-config-test-key', true)));
     }
 }
