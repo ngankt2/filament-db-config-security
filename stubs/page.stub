@@ -26,6 +26,16 @@ class $CLASS_NAME$Settings extends AbstractPageSettings
         return '$SETTING_NAME$';
     }
 
+    /**
+     * Provide default values.
+     *
+     * @return array<string, mixed>
+     */
+    public function getDefaultData(): array
+    {
+        return [];
+    }
+
     public function content(Schema $schema): Schema
     {
         return $schema
