@@ -17,8 +17,6 @@ use Filament\Panel;
 use Filament\Support\SupportServiceProvider;
 use Filament\Tables\TablesServiceProvider;
 use Filament\Widgets\WidgetsServiceProvider;
-use Illuminate\Support\Facades\View;
-use Illuminate\Support\ViewErrorBag;
 use Inerba\DbConfig\DbConfigServiceProvider;
 use Livewire\LivewireServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
@@ -64,13 +62,6 @@ class TestCase extends Orchestra
             'database' => ':memory:',
             'prefix' => '',
         ]);
-
-        // Ensure the shared "errors" view variable contains a default MessageBag
-        // Livewire expects a MessageBag when it re-shares errors during rendering.
-        $errors = new ViewErrorBag;
-        $errors->put('default', new \Illuminate\Support\MessageBag);
-        // Share on the view factory so it's available early in the request lifecycle
-        $app['view']->share('errors', $errors);
 
         // Register a default Filament panel so Filament pages can render in tests.
         Filament::registerPanel(

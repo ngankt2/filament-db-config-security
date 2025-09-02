@@ -2,6 +2,8 @@
 
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
+use Illuminate\Support\MessageBag;
+use Illuminate\Support\ViewErrorBag;
 use Inerba\DbConfig\AbstractPageSettings;
 use Inerba\DbConfig\Facades\DbConfig;
 use Livewire\Livewire;
@@ -37,6 +39,11 @@ class SettingsPageWithDefaults extends AbstractPageSettings
 
 it('loads default data and merges correctly with database values', function () {
     Livewire::component('settings-page-with-defaults', SettingsPageWithDefaults::class);
+
+    $errors = session()->get('errors', new ViewErrorBag);
+    if ($errors->isEmpty()) {
+        $errors->put('default', new MessageBag);
+    }
 
     // SCENARIO 1: Nessun dato nel database.
     Livewire::test('settings-page-with-defaults')
