@@ -31,9 +31,27 @@ abstract class AbstractPageSettings extends Page
 
     abstract protected function settingName(): string;
 
+    /**
+     * Provide default values.
+     *
+     * These defaults will be used when initializing the page and may be merged with any
+     * persisted or user-provided overrides.
+     *
+     * @return array<string,mixed>
+     */
+    public function getDefaultData(): array
+    {
+        return [];
+    }
+
     public function mount(): void
     {
-        $this->data = DbConfig::getGroup($this->settingName());
+        $db = DbConfig::getGroup($this->settingName()) ?? [];
+        $defaults = $this->getDefaultData();
+
+        // Merge defaults with DB values: DB values take precedence.
+        $this->data = array_replace_recursive($defaults, $db);
+
         $this->content->fill($this->data);
     }
 
