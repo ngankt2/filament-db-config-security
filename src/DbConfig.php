@@ -2,6 +2,7 @@
 
 namespace Inerba\DbConfig;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -70,6 +71,41 @@ class DbConfig
     }
 
     /**
+     * Get the last updated timestamp for a specific group.
+     *
+     * usage: DbConfig::getLastUpdated('general');
+     *
+     * @param  string  $group  The group name.
+     * @param  string  $format  The date format (default: 'F j, Y, g:i a').
+     * @param  string  $timezone  The timezone (default: 'UTC').
+     * @return string|null The formatted last updated timestamp or null if not found.
+     */
+    public static function getGroupLastUpdatedAt(string $group, string $format = 'F j, Y, g:i a', string $timezone = 'UTC'): ?string
+    {
+        $tableName = config('db-config.table_name', 'db_config');
+
+        // Un'unica query con aggregazione
+        $timestamp = DB::table($tableName)
+            ->where('group', $group)
+            ->max('updated_at');
+
+        if (empty($timestamp)) {
+            return null;
+        }
+
+        try {
+            $fromTz = config('app.timezone', 'UTC');
+            $dt = $timestamp instanceof Carbon
+                ? $timestamp
+                : Carbon::parse($timestamp, $fromTz);
+
+            return $dt->setTimezone($timezone)->format($format);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
      * Parses a given key and returns an array containing the group and setting.
      *
      * @param  string  $key  The key to be parsed.
@@ -111,16 +147,25 @@ class DbConfig
     {
         $tableName = config('db-config.table_name', 'db_config');
 
-        DB::table($tableName)
-            ->updateOrInsert(
+        try {
+            $encoded = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            throw new \RuntimeException('Unable to serialize value to JSON: ' . $e->getMessage(), 0, $e);
+        }
+
+        DB::table($tableName)->upsert(
+            [
                 [
                     'group' => $group,
                     'key' => $setting,
+                    'settings' => $encoded,
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ],
-                [
-                    'settings' => json_encode($value),
-                ]
-            );
+            ],
+            ['group', 'key'], // unique by
+            ['settings', 'updated_at'] // columns to update on duplicate
+        );
     }
 
     protected static function getCacheKey(string $group, string $setting): string
