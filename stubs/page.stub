@@ -9,6 +9,9 @@ use Filament\Schemas\Schema;
 
 class $CLASS_NAME$Settings extends AbstractPageSettings
 {
+    /**
+     * @var array<string, mixed> | null
+     */
     public ?array $data = [];
 
     protected static ?string $title = '$TITLE$';
