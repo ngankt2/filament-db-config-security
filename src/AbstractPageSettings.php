@@ -75,6 +75,7 @@ abstract class AbstractPageSettings extends Page
      * Initializes the page state by loading persisted values for the settings group and merging them with defaults.
      *
      * The merged result is assigned to the internal `$data` property.
+     * If the page defines a `$form` or `$content` property, it is filled with the merged data.
      */
     public function mount(): void
     {
@@ -83,6 +84,13 @@ abstract class AbstractPageSettings extends Page
 
         // Merge defaults with DB values: DB values take precedence.
         $this->data = array_replace_recursive($defaults, $db);
+
+        // Support both $this->content and $this->form for the schema instance.
+        if (! isset($this->form)) {
+            $this->form = $this->content;
+        }
+
+        $this->form->fill($this->data);
     }
 
     /**
