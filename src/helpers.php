@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 if (! function_exists('db_config')) {
     /**
      * Retrieve a configuration value from the database.
