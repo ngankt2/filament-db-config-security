@@ -27,7 +27,7 @@ It’s ideal both for storing configuration (like site name, contact info, label
 It provides a clean set of simple helpers for reading and writing values, with transparent caching under the hood, and persists data as JSON in a dedicated table.  
 It is framework-friendly and requires no custom Eloquent models in your app.
 
-![screenshot](./.github/resources/screenshot.jpg)
+![DB Config GIF Demo](./.github/resources/demo.gif)
 
 > You may use **any Filament form fields or layout components - including third-party ones -** to build your settings and content pages, giving you full flexibility in how data is structured and edited.
 
