@@ -97,9 +97,7 @@ abstract class AbstractPageSettings extends Page
      */
     public function save(): void
     {
-
         // Support both $this->content and $this->form for the schema instance.
-        // This is to accommodate different naming conventions.
         if (! isset($this->form)) {
             $this->form = $this->content;
         }
@@ -127,6 +125,7 @@ abstract class AbstractPageSettings extends Page
         return [
             Action::make('save')
                 ->label(__('db-config::db-config.save'))
+                ->keyBindings(['mod+s'])
                 ->action(fn () => $this->save()),
         ];
     }
