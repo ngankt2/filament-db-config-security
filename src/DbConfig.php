@@ -1,15 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Inerba\DbConfig;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Manages reading, writing, and caching of configuration settings stored in the database.
+ *
+ * Retrieves configuration entries from a configurable table, uses the application cache
+ * with a configurable TTL, and provides helpers to fetch all settings for a group and
+ * to obtain the group's last updated timestamp.
+ */
 class DbConfig
 {
     /**
-     * Retrieve a configuration value from the database.
+     * Retrieve a configuration value from the database, using cache when available.
+     *
+     * Accepts dotted keys in the form "group.setting" or "group.setting.subkey".
+     * Returns the provided default when the key is absent.
      *
      * @param  string  $key  The configuration key.
      * @param  mixed  $default  The default value to return if the configuration key is not found.
@@ -35,7 +47,10 @@ class DbConfig
     }
 
     /**
-     * Set a configuration value in the database.
+     * Store a configuration value in the database and invalidate the related cache.
+     *
+     * The key must use dotted notation "group.setting". The value is JSON-serialized
+     * before being persisted.
      *
      * @param  string  $key  The configuration key.
      * @param  mixed  $value  The configuration value.
@@ -52,10 +67,13 @@ class DbConfig
     }
 
     /**
-     * Retrieves the settings for a specific group from the database.
+     * Retrieve all settings for a specific group from the storage table.
+     *
+     * Returns an associative array where keys are setting names and values are the
+     * decoded JSON values or null.
      *
      * @param  string  $group  The group name.
-     * @return array<string, mixed|null> The settings for the group (key => decoded settings).
+     * @return array<string, mixed|null>|null Associative array mapping setting keys to decoded values or null; returns an empty array if the group has no settings.
      */
     public static function getGroup(string $group): ?array
     {
@@ -71,7 +89,11 @@ class DbConfig
     }
 
     /**
-     * Get the last updated timestamp for a specific group.
+     * Return the formatted last updated timestamp for a specific group.
+     *
+     * Performs an aggregated query to obtain the maximum `updated_at` timestamp
+     * for the requested group and returns it formatted in the requested timezone
+     * and format. Returns null if no timestamp is available or on parse errors.
      *
      * usage: DbConfig::getLastUpdated('general');
      *
@@ -122,6 +144,10 @@ class DbConfig
     }
 
     /**
+     * Fetch configuration data for a specific group and setting from the database.
+     *
+     * @param  string  $group  The group name.
+     * @param  string  $setting  The setting name.
      * @return array<string, mixed>
      */
     protected static function fetchConfig(string $group, string $setting): array
@@ -143,6 +169,16 @@ class DbConfig
         ];
     }
 
+    /**
+     * Persist a configuration value for a given group and setting into the storage table.
+     *
+     * The provided value is JSON-encoded before persisting. A RuntimeException is thrown
+     * if encoding fails. This method also updates timestamps and performs an upsert.
+     *
+     * @param  string  $group  The group name.
+     * @param  string  $setting  The setting name.
+     * @param  mixed  $value  The value to be stored.
+     */
     protected static function storeConfig(string $group, string $setting, mixed $value): void
     {
         $tableName = config('db-config.table_name', 'db_config');
@@ -168,6 +204,16 @@ class DbConfig
         );
     }
 
+    /**
+     * Build the cache key used to store/fetch cached settings for a group and setting.
+     *
+     * The prefix is read from configuration and combined with group and setting
+     * to produce a namespaced cache key string.
+     *
+     * @param  string  $group  The group name.
+     * @param  string  $setting  The setting name.
+     * @return string The constructed cache key.
+     */
     protected static function getCacheKey(string $group, string $setting): string
     {
         $prefix = config('db-config.cache.prefix', 'db-config');
