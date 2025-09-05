@@ -11,6 +11,12 @@ use Filament\Pages\Page;
 use RuntimeException;
 
 /**
+ * Abstract base page for Filament settings pages that persist a named configuration group.
+ *
+ * Loads default values, merges them with persisted data from the database, and provides
+ * lifecycle helpers and a save routine that persists form state into the corresponding
+ * configuration group.
+ *
  * @property object|null $form Instance of the content (form/schema) used by the page.
  * @property object|null $content Instance of the content (form/schema) used by the page.
  */
@@ -25,6 +31,12 @@ abstract class AbstractPageSettings extends Page
 
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-wrench-screwdriver';
 
+    /**
+     * Returns the navigation group label used by the Filament UI to group this page.
+     *
+     * The value is retrieved from translation resources and may be null when a translation
+     * is not defined.
+     */
     public static function getNavigationGroup(): ?string
     {
         return __('db-config::db-config.navigation_group');
@@ -33,23 +45,37 @@ abstract class AbstractPageSettings extends Page
     abstract protected function settingName(): string;
 
     /**
-     * Provide default values.
+     * Returns the default data used to initialize the page state.
      *
-     * These defaults will be used when initializing the page and may be merged with any
-     * persisted or user-provided overrides.
+     * These defaults are merged with persisted values; persisted values take precedence.
      *
-     * @return array<string,mixed>
+     * @return array<string, mixed> Array of default values keyed by setting name.
      */
     public function getDefaultData(): array
     {
         return [];
     }
 
+    /**
+     * Returns the formatted last-updated timestamp for the settings group associated with this page.
+     *
+     * Accepts timezone and format parameters and returns a formatted string, or null if the
+     * timestamp is not available.
+     *
+     * @param  string  $timezone  Timezone identifier, e.g., 'UTC', 'Europe/Rome'.
+     * @param  string  $format  Date format string compatible with PHP's date() function.
+     * @return string|null Formatted timestamp or null if not available.
+     */
     public function lastUpdatedAt(string $timezone = 'UTC', string $format = 'F j, Y, g:i a'): ?string
     {
         return DbConfig::getGroupLastUpdatedAt($this->settingName(), $format, $timezone);
     }
 
+    /**
+     * Initializes the page state by loading persisted values for the settings group and merging them with defaults.
+     *
+     * The merged result is assigned to the internal `$data` property.
+     */
     public function mount(): void
     {
         $db = DbConfig::getGroup($this->settingName()) ?? [];
@@ -60,7 +86,14 @@ abstract class AbstractPageSettings extends Page
     }
 
     /**
-     * @throws RuntimeException
+     * Persists the current form state into the associated settings group.
+     *
+     * If `$this->form` is not set, `$this->content` is used as fallback. The method verifies at runtime
+     * that the form instance exposes `getState()`; it iterates every key/value pair returned by `getState()`
+     * and calls `DbConfig::set("{settingName}.{key}", $value)` to persist each value. A Filament
+     * notification is sent upon successful completion.
+     *
+     * @throws RuntimeException When the form instance is missing or does not provide `getState()`.
      */
     public function save(): void
     {
