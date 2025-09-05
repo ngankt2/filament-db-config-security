@@ -1,20 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Inerba\DbConfig;
 
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Schemas\Concerns\InteractsWithSchemas;
+use RuntimeException;
 
 /**
+ * @property object|null $form Instance of the content (form/schema) used by the page.
  * @property object|null $content Instance of the content (form/schema) used by the page.
  */
 abstract class AbstractPageSettings extends Page
 {
-    use InteractsWithSchemas;
-
     /**
      * Data loaded from the DB config group.
      *
@@ -44,6 +45,11 @@ abstract class AbstractPageSettings extends Page
         return [];
     }
 
+    public function lastUpdatedAt(string $timezone = 'UTC', string $format = 'F j, Y, g:i a'): ?string
+    {
+        return DbConfig::getGroupLastUpdatedAt($this->settingName(), $format, $timezone);
+    }
+
     public function mount(): void
     {
         $db = DbConfig::getGroup($this->settingName()) ?? [];
@@ -51,14 +57,26 @@ abstract class AbstractPageSettings extends Page
 
         // Merge defaults with DB values: DB values take precedence.
         $this->data = array_replace_recursive($defaults, $db);
-
-        $this->content->fill($this->data);
     }
 
+    /**
+     * @throws RuntimeException
+     */
     public function save(): void
     {
+
+        // Support both $this->content and $this->form for the schema instance.
+        // This is to accommodate different naming conventions.
+        if (! isset($this->form)) {
+            $this->form = $this->content;
+        }
+
+        if (! is_object($this->form) || ! method_exists($this->form, 'getState')) {
+            throw new \RuntimeException('Expected $this->form to be an object exposing getState().');
+        }
+
         /** @var array<string,mixed> $state */
-        $state = $this->content->getState();
+        $state = $this->form->getState();
 
         collect($state)->each(function ($setting, $key) {
             DbConfig::set($this->settingName() . '.' . $key, $setting);
