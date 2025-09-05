@@ -1,3 +1,8 @@
 <x-filament-panels::page>
-    {{ $this->content }}
+    <form wire:submit="save" class="fi-page-content">
+        {{ $this->form }}
+        <small class="text-success">
+            Last update: {{ $this->lastUpdatedAt(timezone: 'UTC', format: 'F j, Y, H:i:s') ?? 'Never' }} UTC
+        </small>
+    </form>
 </x-filament-panels::page>
