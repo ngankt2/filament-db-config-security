@@ -39,7 +39,7 @@ class $CLASS_NAME$Settings extends AbstractPageSettings
         return [];
     }
 
-    public function content(Schema $schema): Schema
+    public function form(Schema $schema): Schema
     {
         return $schema
             ->components([
