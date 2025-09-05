@@ -18,7 +18,7 @@ class SettingsPageWithDefaults extends AbstractPageSettings
         return 'test-defaults';
     }
 
-    public function content(Schema $schema): Schema
+    public function form(Schema $schema): Schema
     {
         return $schema->components([
             TextInput::make('name'),
