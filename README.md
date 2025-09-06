@@ -41,6 +41,7 @@ It is framework-friendly and requires no custom Eloquent models in your app.
 
 ![DB Config GIF Demo](./.github/resources/demo.gif)
 
+> [!NOTE] 
 > You may use **any Filament form fields or layout components - including third-party ones -** to build your settings and content pages, giving you full flexibility in how data is structured and edited.
 
 <div class="filament-hidden">
@@ -124,8 +125,8 @@ Choose **Spatie Laravel Settings Plugin** if you need **strict typing, validatio
     php artisan vendor:publish --tag="db-config-migrations" --tag="db-config-config"
     ```
 
-    > [!IMPORTANT]
-    > *If you want to use a custom table name instead of `db_config`, edit the configuration file `config/db-config.php` before running the migration. See the [Configuration](#configuration) section for details.*
+    > [!IMPORTANT] 
+    > If you want to use a custom table name instead of `db_config`, edit the configuration file `config/db-config.php` before running the migration. See the [Configuration](#configuration) section for details.
 
 3. **Run the migration**:
 
@@ -392,7 +393,8 @@ This package stores settings as JSON. Ensure your chosen database supports JSON 
 
 ## Security considerations
 
-> ⚠️ DB Config is a place for values you want admins to edit safely at runtime, not for infrastructure secrets (API keys, DB credentials).
+> [!CAUTION] 
+> DB Config is a place for values you want admins to edit safely at runtime, not for infrastructure secrets (API keys, DB credentials).
 
 Values are not encrypted by default. If you need encryption, apply it before using the package’s helpers to read or write values.
 
