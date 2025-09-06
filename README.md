@@ -6,7 +6,7 @@
 
 # DB Config – Lightweight settings & content manager for Filament
 
-<p class="filament-hidden">
+<div class="filament-hidden">
 
 [![Latest Stable Version](https://img.shields.io/packagist/v/inerba/filament-db-config)](https://packagist.org/packages/inerba/filament-db-config)
 [![Run Tests](https://github.com/inerba/filament-db-config/actions/workflows/tests.yaml/badge.svg)](https://github.com/inerba/filament-db-config/actions/workflows/tests.yaml)
@@ -14,7 +14,11 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/inerba/filament-db-config)](https://packagist.org/packages/inerba/filament-db-config)
 [![License](https://img.shields.io/packagist/l/inerba/filament-db-config)](https://packagist.org/packages/inerba/filament-db-config)
 
+</div>
+
 ⭐ Star this repo if it helps you - it truly motivates us to do more. 🙏😊
+
+<div class="filament-hidden">
 
 [![Share on X](https://img.shields.io/badge/share-000000?logo=x&logoColor=white)](https://x.com/intent/tweet?text=Check%20out%20this%20project%20on%20GitHub:%20https://github.com/inerba/filament-db-config%20%23OpenIDConnect%20%23Security%20%23Authentication)
 [![Share on Facebook](https://img.shields.io/badge/share-1877F2?logo=facebook&logoColor=white)](https://www.facebook.com/sharer/sharer.php?u=https://github.com/inerba/filament-db-config)
@@ -22,7 +26,7 @@
 [![Share on Reddit](https://img.shields.io/badge/share-FF4500?logo=reddit&logoColor=white)](https://www.reddit.com/submit?title=Check%20out%20this%20project%20on%20GitHub:%20https://github.com/inerba/filament-db-config)
 [![Share on Telegram](https://img.shields.io/badge/share-0088CC?logo=telegram&logoColor=white)](https://t.me/share/url?url=https://github.com/inerba/filament-db-config&text=Check%20out%20this%20project%20on%20GitHub)
 
-</p>
+</div>
 
 DB Config is a Filament plugin that provides a simple, database-backed key/value store for **application settings** and **editable content**.  
 It’s ideal both for storing configuration (like site name, contact info, labels) and for managing page sections (homepage hero, landing blocks, about text, etc.) without the need for a full CMS.
