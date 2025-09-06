@@ -122,11 +122,9 @@ Choose **Spatie Laravel Settings Plugin** if you need **strict typing, validatio
 2. **Publish the assets** (Configuration and Migration):
 
     ```bash
-    php artisan vendor:publish --tag="db-config-migrations" --tag="db-config-config"
+    php artisan vendor:publish --tag="db-config-migrations"
     ```
 
-    > [!IMPORTANT] 
-    > If you want to use a custom table name instead of `db_config`, edit the configuration file `config/db-config.php` before running the migration. See the [Configuration](#configuration) section for details.
 
 3. **Run the migration**:
 
@@ -135,6 +133,9 @@ Choose **Spatie Laravel Settings Plugin** if you need **strict typing, validatio
     ```
 
     This command executes the migration file that you just published, creating the `db_config` table (or the custom table name you defined in the config file) in your database. Your package is now ready to use!
+
+> [!TIP] 
+> If you want to use a custom table name instead of `db_config`, edit the configuration file `config/db-config.php` before running the migration. See the [Configuration](#configuration) section for details.
 
 ## Configuration
 
