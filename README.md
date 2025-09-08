@@ -111,19 +111,13 @@ Get up and running in just a few steps:
 1. **Generate Your First Settings Page**
    
     ```bash
-    # Generate your Filament Page
     php artisan make:db-config Website
-
-    # You can repeat this step for more pages:
-    php artisan make:db-config Homepage
-    php artisan make:db-config AiContent
-    # etc.
     ```
 
-    This command creates a new Filament page (e.g., App/Filament/Pages/WebsiteSettings.php).
+    This command creates a new Filament page (e.g., App/Filament/Pages/WebsiteSettings.php). You can repeat this step for more pages as needed.
 
-    > [!NOTE]
-    > The generator will automatically add the “Settings” suffix to the page name for consistency (e.g., WebsiteSettings), but you can use any group name you wish.
+> [!NOTE]
+> The generator will automatically add the “Settings” suffix to the page name for consistency (e.g., WebsiteSettings), but you can use any group name you wish.
 
 
 2. **Define Your Fields**
