@@ -143,8 +143,8 @@ Get up and running in just a few steps:
     }
     ```
 
-    > [!NOTE]
-    > You may use **any Filament form fields or layout components - including third-party ones -** to build your settings and content pages, giving you full flexibility in how data is structured and edited.
+> [!NOTE]
+> You may use **any Filament form fields or layout components - including third-party ones -** to build your settings and content pages, giving you full flexibility in how data is structured and edited.
 
 3. **Save and Edit Settings from the Admin Panel**
 
