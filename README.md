@@ -41,68 +41,36 @@ It is framework-friendly and requires no custom Eloquent models in your app.
 
 ![DB Config GIF Demo](./.github/resources/demo.gif)
 
-> [!NOTE] 
-> You may use **any Filament form fields or layout components - including third-party ones -** to build your settings and content pages, giving you full flexibility in how data is structured and edited.
-
 <div class="filament-hidden">
 <b>Table of Contents</b>
 
 - [DB Config – Lightweight settings \& content manager for Filament](#db-config--lightweight-settings--content-manager-for-filament)
-  - [Why use DB Config when Spatie Settings already exists?](#why-use-db-config-when-spatie-settings-already-exists)
   - [Requirements](#requirements)
   - [Installation](#installation)
+  - [🚀 Getting Started](#-getting-started)
   - [Configuration](#configuration)
-  - [Generate a settings page](#generate-a-settings-page)
-  - [Read \& write values](#read--write-values)
-    - [Read a value (helper)](#read-a-value-helper)
-    - [Blade directive](#blade-directive)
-    - [Read a value (class)](#read-a-value-class)
-    - [Write a value](#write-a-value)
-    - [Read an entire group as associative array](#read-an-entire-group-as-associative-array)
-    - [Facade (optional)](#facade-optional)
-  - [Advanced usage](#advanced-usage)
+  - [Advanced Usage](#advanced-usage)
+    - [Generate a settings page](#generate-a-settings-page)
+    - [Read \& write values](#read--write-values)
+      - [Read a value (helper)](#read-a-value-helper)
+      - [Blade directive](#blade-directive)
+      - [Read a value (class)](#read-a-value-class)
+      - [Write a value](#write-a-value)
+      - [Read an entire group as associative array](#read-an-entire-group-as-associative-array)
+      - [Facade (optional)](#facade-optional)
     - [Set Default Values](#set-default-values)
+    - [Working with nested values](#working-with-nested-values)
   - [How it works](#how-it-works)
-  - [Database schema](#database-schema)
-  - [Working with nested values](#working-with-nested-values)
-  - [Caching behavior](#caching-behavior)
-  - [Return values and defaults](#return-values-and-defaults)
-  - [Database engines](#database-engines)
+    - [Database](#database)
+    - [Caching behavior](#caching-behavior)
+    - [Return values and defaults](#return-values-and-defaults)
+  - [Why use DB Config when Spatie Settings already exists?](#why-use-db-config-when-spatie-settings-already-exists)
   - [Security considerations](#security-considerations)
   - [Testing](#testing)
   - [Versioning](#versioning)
   - [License](#license)
   
 </div>
-
-## Why use DB Config when Spatie Settings already exists?
-
-Both [DB Config](https://github.com/inerba/filament-db-config) and the official [Spatie Laravel Settings Plugin](https://github.com/filamentphp/spatie-laravel-settings-plugin) solve a similar problem - managing application settings in Laravel + Filament - but they take very different approaches.  
-Spatie Settings focuses on **strict typing, validation, and integration with your domain logic**, while DB Config is designed to be **lightweight, flexible, and quick to set up**, even for editable content blocks.
-
-<details><summary><b>Show comparison table between DB Config and Spatie Settings</b></summary>
-
-The table below highlights the key differences so you can choose the right tool for your project:
-
-| Feature           | DB Config                                                                | Spatie Laravel Settings Plugin                                                      |
-| ----------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| **Setup**         | Ready to use, no extra classes or migrations                             | Requires a dedicated `Settings` class for each group, plus migration to register it |
-| **Data storage**  | Single `db_config` table with JSON values                                | Each group stored as its own settings record (linked to its Settings class)         |
-| **Boilerplate**   | None required                                                            | A new PHP class must be created for every settings group                            |
-| **Access**        | Dot notation, supports nested keys in JSON                               | Strongly typed properties defined in the Settings class                             |
-| **Cache**         | Built-in, refreshed automatically on write                               | Built-in, but usually configured explicitly                                         |
-| **Ideal for**     | Application settings and editable page content (homepage, blocks, texts) | Strictly typed, validated settings tightly bound to app logic                       |
-| **Content usage** | Can store full page sections (homepage, landing, about, etc.)            | Not designed for CMS-like use                                                       |
-| **Dependencies**  | No external deps                                                         | Requires `spatie/laravel-settings`                                                  |
-
-Choose **DB Config** if you want:
-
-- A **lightweight key/value system** for both settings and content.
-- Minimal setup, no boilerplate code.
-- Flexibility to manage simple settings and even **page content** directly in Filament.
-
-Choose **Spatie Laravel Settings Plugin** if you need **strict typing, validation, and DTOs** as part of your domain logic.
-</details>
 
 ## Requirements
 
@@ -125,7 +93,6 @@ Choose **Spatie Laravel Settings Plugin** if you need **strict typing, validatio
     php artisan vendor:publish --tag="db-config-migrations"
     ```
 
-
 3. **Run the migration**:
 
     ```bash
@@ -134,16 +101,77 @@ Choose **Spatie Laravel Settings Plugin** if you need **strict typing, validatio
 
     This command executes the migration file that you just published, creating the `db_config` table (or the custom table name you defined in the config file) in your database. Your package is now ready to use!
 
-> [!TIP] 
+> [!TIP]
 > If you want to use a custom table name instead of `db_config`, edit the configuration file `config/db-config.php` before running the migration. See the [Configuration](#configuration) section for details.
+
+## 🚀 Getting Started
+
+Get up and running in just a few steps:
+
+1. **Generate Your First Settings Page**
+   
+    ```bash
+    # 1. Generate your Filament Page
+    php artisan make:db-config WebsiteSettings
+    ```
+
+    This command creates a new Filament page (e.g., App/Filament/Pages/WebsiteSettings.php).
+
+2. **Define Your Fields**
+
+    Open the generated page and customize the form() method with your desired fields:
+
+    ```php
+    public function form(Form $form): Form
+    {
+        return $form
+            ->components([
+                TextInput::make('site_name')->label('Site Name'),
+                TextInput::make('contact_email')->label('Contact Email'),
+                Toggle::make('maintenance_mode')->label('Maintenance Mode'),
+            ])
+            ->statePath('data');
+    }
+    ```
+
+    > [!NOTE]
+    > You may use **any Filament form fields or layout components - including third-party ones -** to build your settings and content pages, giving you full flexibility in how data is structured and edited.
+
+3. **Save and Edit Settings from the Admin Panel**
+
+    You can now edit these settings directly in your Filament admin panel—no extra boilerplate needed.
+
+4. **Use Your Settings Anywhere**
+
+    Retrieve your configuration values easily:
+   - In PHP:
+
+       ```php
+       $siteName = db_config('website.site_name', 'Default Site Name');
+       ```
+
+   - In Blade:
+
+       ```html
+       <h1>{{ db_config('website.site_name', 'Default Site Name') }}</h1>
+
+       <!-- or -->
+
+       <h1>@db_config('website.site_name', 'Default Site Name')</h1>
+       ```
+
+**That’s it!** 🎉
+
+Define your fields, save from the admin panel, and access your settings anywhere in your Laravel app.
 
 ## Configuration
 
 You can customize the behavior of the package by publishing the configuration file:
 
-    ```bash
-    php artisan vendor:publish --tag="db-config-config"
-    ```
+```bash
+php artisan vendor:publish --tag="db-config-config"
+```
+
 <details><summary><b>Details</b></summary>
 
 **Table Name**: By default, settings are stored in the db_config table. You can change this by modifying the table_name value. This is useful to avoid collisions or to follow a specific naming convention.
@@ -166,7 +194,9 @@ You can customize the behavior of the package by publishing the configuration fi
 ```
 </details>
 
-## Generate a settings page
+## Advanced Usage
+
+### Generate a settings page
 
 DB Config ships with an Artisan generator and an abstract Page class to quickly scaffold Filament settings pages.
 
@@ -231,7 +261,7 @@ public function content(Schema $schema): Schema
 
 </details>
 
-## Read & write values
+### Read & write values
 
 The simplest way to manage values is through the **Filament pages scaffolded by DB Config**:  
 you can define the fields you need (text inputs, toggles, repeaters, rich text, even third-party components) and edit them directly in the admin panel.  
@@ -239,13 +269,13 @@ All changes are saved automatically in the `db_config` table and cached for fast
 
 For programmatic access, the package also provides simple helpers and static methods:
 
-### Read a value (helper)
+#### Read a value (helper)
 
 ```php
 db_config('website.site_name', 'Default Name');
 ```
 
-### Blade directive
+#### Blade directive
 
 You can also access values directly inside Blade templates:
 
@@ -253,36 +283,34 @@ You can also access values directly inside Blade templates:
 @db_config('website.site_name', 'Default Name')
 ```
 
-### Read a value (class)
+#### Read a value (class)
 
 ```php
 \Inerba\DbConfig\DbConfig::get('website.site_name', 'Default Name');
 ```
 
-### Write a value
+#### Write a value
 
 ```php
 \Inerba\DbConfig\DbConfig::set('website.site_name', 'Acme Inc.');
 ```
 
-### Read an entire group as associative array
+#### Read an entire group as associative array
 
 ```php
 \Inerba\DbConfig\DbConfig::getGroup('website');
 // => [ 'site_name' => 'Acme Inc.', 'contact' => ['email' => 'info@acme.test'] ]
 ```
 
-### Facade (optional)
+#### Facade (optional)
 
 ```php
 \Inerba\DbConfig\Facades\DbConfig::get('website.site_name');
 ```
 
-> Note: these values are **not** part of Laravel’s config() cache.
-Always use db_config() or @db_config instead of config().
-> The `db_config()` helper is auto-registered by the package and is the recommended way to read values in application code.
-
-## Advanced usage
+> [!NOTE]
+> these values are **not** part of Laravel’s config() cache.
+Always use db_config() or @db_config instead of config(). The `db_config()` helper is auto-registered by the package and is the recommended way to read values in application code.
 
 ### Set Default Values
 
@@ -326,30 +354,7 @@ When the settings page is loaded, the getDefaultData() method provides the initi
 
 It's important to note that these default values are not persistent until the user explicitly clicks the "Save" button.
 
-## How it works
-
-Settings are organized by a two-part key: `group.setting`, with optional nested sub-keys (e.g. `group.setting.nested.key`).
-
-Under the hood:
-
-- **Database Storage:** Settings are stored in a database table (by default `db_config`), with one row per `(group, key)`. The actual settings are stored as a JSON payload in the `settings` column.
-- **Intelligent Caching:** Reads are cached to ensure high performance. By default, they are cached forever, but you can configure a specific TTL (Time To Live) in the config file.
-- **Configurable Cache Keys:** The cache key is generated using a configurable prefix (`db-config` by default) followed by the group and setting (e.g., `db-config.website.site_name`).
-- **Automatic Cache Invalidation:** Writes automatically clear the corresponding cache entry, ensuring that data always stays fresh.
-
-## Database schema
-
-The `db_config` table contains:
-
-- `id` (bigint, primary key)
-- `group` (string)
-- `key` (string)
-- `settings` (json, nullable)
-- `created_at`, `updated_at` (timestamps)
-
-There is a unique index on (`group`, `key`). Timestamps are present but not used by the package logic and may remain null depending on your database defaults.
-
-## Working with nested values
+### Working with nested values
 
 DB Config uses a `group.setting` format for keys, with optional nested sub-keys resolved from JSON.
 
@@ -373,7 +378,32 @@ db_config('profile.preferences.theme', 'light'); // 'dark'
 db_config('profile.preferences.timezone', 'UTC'); // 'UTC'
 ```
 
-## Caching behavior
+## How it works
+
+Settings are organized by a two-part key: `group.setting`, with optional nested sub-keys (e.g. `group.setting.nested.key`).
+
+Under the hood:
+
+- **Database Storage:** Settings are stored in a database table (by default `db_config`), with one row per `(group, key)`. The actual settings are stored as a JSON payload in the `settings` column.
+- **Intelligent Caching:** Reads are cached to ensure high performance. By default, they are cached forever, but you can configure a specific TTL (Time To Live) in the config file.
+- **Configurable Cache Keys:** The cache key is generated using a configurable prefix (`db-config` by default) followed by the group and setting (e.g., `db-config.website.site_name`).
+- **Automatic Cache Invalidation:** Writes automatically clear the corresponding cache entry, ensuring that data always stays fresh.
+
+### Database
+
+The `db_config` table contains:
+
+- `id` (bigint, primary key)
+- `group` (string)
+- `key` (string)
+- `settings` (json, nullable)
+- `created_at`, `updated_at` (timestamps)
+
+There is a unique index on (`group`, `key`). Timestamps are present but not used by the package logic and may remain null depending on your database defaults.
+
+> This package stores settings as JSON. Ensure your chosen database supports JSON columns. For SQLite (common in tests), JSON is stored as text and works transparently for typical use cases.
+
+### Caching behavior
 
 To minimize database traffic, DB Config comes with a powerful caching layer. Here’s how it works:
 
@@ -382,19 +412,44 @@ To minimize database traffic, DB Config comes with a powerful caching layer. Her
 - **Configurable TTL:** You can change the default behavior by setting a `ttl` (Time To Live) in minutes in the `config/db-config.php` file. If a TTL is set, the package will use a temporary cache that expires after the specified duration.
 - **Manual Cache Clearing:** When debugging, you can clear the entire framework cache using `php artisan cache:clear` to reset all cached settings.
 
-## Return values and defaults
+### Return values and defaults
 
 - If a value or nested path does not exist, the provided default is returned.
 - If the stored JSON value is `null`, the default is returned.
 - `getGroup()` returns an associative array of all settings for the group, or an empty array if none exist.
 
-## Database engines
+## Why use DB Config when Spatie Settings already exists?
 
-This package stores settings as JSON. Ensure your chosen database supports JSON columns. For SQLite (common in tests), JSON is stored as text and works transparently for typical use cases.
+Both [DB Config](https://github.com/inerba/filament-db-config) and the official [Spatie Laravel Settings Plugin](https://github.com/filamentphp/spatie-laravel-settings-plugin) solve a similar problem - managing application settings in Laravel + Filament - but they take very different approaches.  
+Spatie Settings focuses on **strict typing, validation, and integration with your domain logic**, while DB Config is designed to be **lightweight, flexible, and quick to set up**, even for editable content blocks.
+
+<details><summary><b>Show comparison table between DB Config and Spatie Settings</b></summary>
+
+The table below highlights the key differences so you can choose the right tool for your project:
+
+| Feature           | DB Config                                                                | Spatie Laravel Settings Plugin                                                      |
+| ----------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| **Setup**         | Ready to use, no extra classes or migrations                             | Requires a dedicated `Settings` class for each group, plus migration to register it |
+| **Data storage**  | Single `db_config` table with JSON values                                | Each group stored as its own settings record (linked to its Settings class)         |
+| **Boilerplate**   | None required                                                            | A new PHP class must be created for every settings group                            |
+| **Access**        | Dot notation, supports nested keys in JSON                               | Strongly typed properties defined in the Settings class                             |
+| **Cache**         | Built-in, refreshed automatically on write                               | Built-in, but usually configured explicitly                                         |
+| **Ideal for**     | Application settings and editable page content (homepage, blocks, texts) | Strictly typed, validated settings tightly bound to app logic                       |
+| **Content usage** | Can store full page sections (homepage, landing, about, etc.)            | Not designed for CMS-like use                                                       |
+| **Dependencies**  | No external deps                                                         | Requires `spatie/laravel-settings`                                                  |
+
+Choose **DB Config** if you want:
+
+- A **lightweight key/value system** for both settings and content.
+- Minimal setup, no boilerplate code.
+- Flexibility to manage simple settings and even **page content** directly in Filament.
+
+Choose **Spatie Laravel Settings Plugin** if you need **strict typing, validation, and DTOs** as part of your domain logic.
+</details>
 
 ## Security considerations
 
-> [!CAUTION] 
+> [!CAUTION]
 > DB Config is a place for values you want admins to edit safely at runtime, not for infrastructure secrets (API keys, DB credentials).
 
 Values are not encrypted by default. If you need encryption, apply it before using the package’s helpers to read or write values.
