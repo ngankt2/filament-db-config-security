@@ -130,6 +130,11 @@ class DbConfigCommand extends Command
             );
         }
 
+        // Remove trailing "settings" suffix (case-insensitive) and trim whitespace
+        $name = (string) Str::of($name)
+            ->replaceMatches('/settings$/i', '')
+            ->trim();
+
         return $this->cachedName = $name;
     }
 
