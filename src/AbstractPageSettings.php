@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Inerba\DbConfig;
+namespace Ngankt2\DbConfig;
 
 use BackedEnum;
 use Filament\Actions\Action;

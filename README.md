@@ -4,6 +4,12 @@
 
 </div>
 
+This project is a fork of https://github.com/inerba/filament-db-config.  
+I only retrieved the source code to customize and use it privately, including renaming namespaces and adding several scenarios for encrypting data before storage.
+
+Special thanks to the original author for their great work.
+
+
 # DB Config – Lightweight settings & content manager for Filament
 
 <div class="filament-hidden">
@@ -232,7 +238,7 @@ Behavior:
 - The command does not overwrite existing files: if the class or the view already exist it will warn and leave the files intact.
 - Names are normalized: the class uses the singular form of the provided name, the view is slugified (spaces and special characters are converted).
 
-Note: the generated class extends `Inerba\DbConfig\AbstractPageSettings` and the view is placed under `resources/views/filament/config-pages/`.
+Note: the generated class extends `Ngankt2\DbConfig\AbstractPageSettings` and the view is placed under `resources/views/filament/config-pages/`.
 
 Page lifecycle and saving:
 
@@ -289,26 +295,26 @@ You can also access values directly inside Blade templates:
 #### Read a value (class)
 
 ```php
-\Inerba\DbConfig\DbConfig::get('website.site_name', 'Default Name');
+\Ngankt2\DbConfig\DbConfig::get('website.site_name', 'Default Name');
 ```
 
 #### Write a value
 
 ```php
-\Inerba\DbConfig\DbConfig::set('website.site_name', 'Acme Inc.');
+\Ngankt2\DbConfig\DbConfig::set('website.site_name', 'Acme Inc.');
 ```
 
 #### Read an entire group as associative array
 
 ```php
-\Inerba\DbConfig\DbConfig::getGroup('website');
+\Ngankt2\DbConfig\DbConfig::getGroup('website');
 // => [ 'site_name' => 'Acme Inc.', 'contact' => ['email' => 'info@acme.test'] ]
 ```
 
 #### Facade (optional)
 
 ```php
-\Inerba\DbConfig\Facades\DbConfig::get('website.site_name');
+\Ngankt2\DbConfig\Facades\DbConfig::get('website.site_name');
 ```
 
 > [!NOTE]
@@ -369,7 +375,7 @@ Example:
 
 ```php
 // Store a nested structure
-\Inerba\DbConfig\DbConfig::set('profile.preferences', [
+\Ngankt2\DbConfig\DbConfig::set('profile.preferences', [
     'theme' => 'dark',
     'notifications' => ['email' => true, 'sms' => false],
 ]);

@@ -1,6 +1,6 @@
 <?php
 
-namespace Inerba\DbConfig\Commands;
+namespace Ngankt2\DbConfig\Commands;
 
 use Filament\Facades\Filament;
 use Filament\Support\Commands\Concerns\CanOpenUrlInBrowser;

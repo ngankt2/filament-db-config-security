@@ -1,17 +1,17 @@
 <?php
 
-namespace Inerba\DbConfig\Facades;
+namespace Ngankt2\DbConfig\Facades;
 
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @see \Inerba\DbConfig
+ * @see \Ngankt2\DbConfig
  *\DbConfig
  */
 class DbConfig extends Facade
 {
     protected static function getFacadeAccessor()
     {
-        return \Inerba\DbConfig\DbConfig::class;
+        return \Ngankt2\DbConfig\DbConfig::class;
     }
 }

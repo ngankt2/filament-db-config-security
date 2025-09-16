@@ -3,7 +3,7 @@
 namespace App\Filament\$PANEL$Pages;
 
 use BackedEnum;
-use Inerba\DbConfig\AbstractPageSettings;
+use Ngankt2\DbConfig\AbstractPageSettings;
 use Filament\Schemas\Components;
 use Filament\Schemas\Schema;
 

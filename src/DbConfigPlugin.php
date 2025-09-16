@@ -1,6 +1,6 @@
 <?php
 
-namespace Inerba\DbConfig;
+namespace Ngankt2\DbConfig;
 
 use Filament\Contracts\Plugin;
 use Filament\Panel;
@@ -9,7 +9,7 @@ class DbConfigPlugin implements Plugin
 {
     public function getId(): string
     {
-        return 'db-config';
+        return 'db-config-security';
     }
 
     public function register(Panel $panel): void

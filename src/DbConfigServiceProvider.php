@@ -1,11 +1,11 @@
 <?php
 
-namespace Inerba\DbConfig;
+namespace Ngankt2\DbConfig;
 
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Blade;
-use Inerba\DbConfig\Commands\DbConfigCommand;
-use Inerba\DbConfig\Testing\TestsDbConfig;
+use Ngankt2\DbConfig\Commands\DbConfigCommand;
+use Ngankt2\DbConfig\Testing\TestsDbConfig;
 use Livewire\Features\SupportTesting\Testable;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
@@ -31,8 +31,9 @@ class DbConfigServiceProvider extends PackageServiceProvider
                     ->publishConfigFile()
                     ->publishMigrations()
                     ->askToRunMigrations()
-                    ->askToStarRepoOnGitHub('inerba/db-config');
+                    ->askToStarRepoOnGitHub('ngankt2/db-config');
             });
+
 
         $configFileName = $package->shortName();
 
@@ -40,9 +41,7 @@ class DbConfigServiceProvider extends PackageServiceProvider
             $package->hasConfigFile();
         }
 
-        if (file_exists($package->basePath('/../database/migrations'))) {
-            $package->hasMigrations($this->getMigrations());
-        }
+        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
 
         if (file_exists($package->basePath('/../resources/lang'))) {
             $package->hasTranslations();
@@ -66,18 +65,15 @@ class DbConfigServiceProvider extends PackageServiceProvider
             }
         }
 
-        // Testing
-        Testable::mixin(new TestsDbConfig);
-
         // Set the Blade directive to retrieve the settings
         Blade::directive('db_config', function ($expression) {
-            return "<?php echo \Inerba\DbConfig\DbConfig::get($expression); ?>";
+            return "<?php echo \Ngankt2\DbConfig\DbConfig::get($expression); ?>";
         });
     }
 
     protected function getAssetPackageName(): ?string
     {
-        return 'inerba/db-config';
+        return 'ngankt2/db-config';
     }
 
     /**

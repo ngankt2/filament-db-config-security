@@ -1,6 +1,6 @@
 <?php
 
-// translations for Inerba/DbConfig
+// translations for Ngankt2/DbConfig
 return [
     'navigation_group' => 'Impostazioni',
     'page_created' => 'Pagina creata',

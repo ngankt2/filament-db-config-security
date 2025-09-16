@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Inerba\DbConfig;
+namespace Ngankt2\DbConfig;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -23,8 +23,8 @@ class DbConfig
      * Accepts dotted keys in the form "group.setting" or "group.setting.subkey".
      * Returns the provided default when the key is absent.
      *
-     * @param  string  $key  The configuration key.
-     * @param  mixed  $default  The default value to return if the configuration key is not found.
+     * @param string $key The configuration key.
+     * @param mixed $default The default value to return if the configuration key is not found.
      * @return mixed The configuration value.
      */
     public static function get(string $key, mixed $default = null): mixed
@@ -34,7 +34,7 @@ class DbConfig
         $cacheKey = static::getCacheKey($group, $setting);
         $cacheTtl = config('db-config.cache.ttl');
 
-        $callback = fn () => static::fetchConfig($group, $setting);
+        $callback = fn() => static::fetchConfig($group, $setting);
 
         // Use remember() with TTL if provided, otherwise rememberForever()
         $data = ($cacheTtl > 0)
@@ -52,8 +52,8 @@ class DbConfig
      * The key must use dotted notation "group.setting". The value is JSON-serialized
      * before being persisted.
      *
-     * @param  string  $key  The configuration key.
-     * @param  mixed  $value  The configuration value.
+     * @param string $key The configuration key.
+     * @param mixed $value The configuration value.
      */
     public static function set(string $key, mixed $value): void
     {
@@ -72,7 +72,7 @@ class DbConfig
      * Returns an associative array where keys are setting names and values are the
      * decoded JSON values or null.
      *
-     * @param  string  $group  The group name.
+     * @param string $group The group name.
      * @return array<string, mixed|null>|null Associative array mapping setting keys to decoded values or null; returns an empty array if the group has no settings.
      */
     public static function getGroup(string $group): ?array
@@ -97,9 +97,9 @@ class DbConfig
      *
      * usage: DbConfig::getLastUpdated('general');
      *
-     * @param  string  $group  The group name.
-     * @param  string  $format  The date format (default: 'F j, Y, g:i a').
-     * @param  string  $timezone  The timezone (default: 'UTC').
+     * @param string $group The group name.
+     * @param string $format The date format (default: 'F j, Y, g:i a').
+     * @param string $timezone The timezone (default: 'UTC').
      * @return string|null The formatted last updated timestamp or null if not found.
      */
     public static function getGroupLastUpdatedAt(string $group, string $format = 'F j, Y, g:i a', string $timezone = 'UTC'): ?string
@@ -130,7 +130,7 @@ class DbConfig
     /**
      * Parses a given key and returns an array containing the group and setting.
      *
-     * @param  string  $key  The key to be parsed.
+     * @param string $key The key to be parsed.
      * @return array{0:string,1:?string,2:string} [group, setting, subKey]
      */
     protected static function parseKey(string $key): array
@@ -146,8 +146,8 @@ class DbConfig
     /**
      * Fetch configuration data for a specific group and setting from the database.
      *
-     * @param  string  $group  The group name.
-     * @param  string  $setting  The setting name.
+     * @param string $group The group name.
+     * @param string $setting The setting name.
      * @return array<string, mixed>
      */
     protected static function fetchConfig(string $group, string $setting): array
@@ -160,12 +160,12 @@ class DbConfig
             ->where('key', $setting)
             ->first();
 
-        if ($item === null || ! property_exists($item, 'settings')) {
+        if ($item === null || !property_exists($item, 'settings')) {
             return [];
         }
-
+        $settingValue = config('db-config.encrypt') ? _decrypt_static($item->settings) : $item->settings;
         return [
-            $setting => json_decode($item->settings, true),
+            $setting => json_decode($settingValue, true),
         ];
     }
 
@@ -175,9 +175,9 @@ class DbConfig
      * The provided value is JSON-encoded before persisting. A RuntimeException is thrown
      * if encoding fails. This method also updates timestamps and performs an upsert.
      *
-     * @param  string  $group  The group name.
-     * @param  string  $setting  The setting name.
-     * @param  mixed  $value  The value to be stored.
+     * @param string $group The group name.
+     * @param string $setting The setting name.
+     * @param mixed $value The value to be stored.
      */
     protected static function storeConfig(string $group, string $setting, mixed $value): void
     {
@@ -194,7 +194,7 @@ class DbConfig
                 [
                     'group' => $group,
                     'key' => $setting,
-                    'settings' => $encoded,
+                    'settings' => config('db-config.encrypt') ? _encrypt_static($encoded) : $encoded,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ],
@@ -210,8 +210,8 @@ class DbConfig
      * The prefix is read from configuration and combined with group and setting
      * to produce a namespaced cache key string.
      *
-     * @param  string  $group  The group name.
-     * @param  string  $setting  The setting name.
+     * @param string $group The group name.
+     * @param string $setting The setting name.
      * @return string The constructed cache key.
      */
     protected static function getCacheKey(string $group, string $setting): string

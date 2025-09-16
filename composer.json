@@ -1,29 +1,25 @@
 {
-    "name": "inerba/filament-db-config",
+    "name": "ngankt2/filament-db-config-encrypt",
     "description": "A Filament plugin for database-backed application settings and editable content, with caching and easy page generation.",
     "keywords": [
         "filament",
         "filament-plugin",
         "laravel-filament",
+        "laravel-db-config",
         "laravel"
     ],
-    "homepage": "https://github.com/inerba/filament-db-config",
-    "support": {
-        "issues": "https://github.com/inerba/filament-db-config/issues",
-        "source": "https://github.com/inerba/filament-db-config"
-    },
+    "homepage": "",
     "license": "MIT",
     "authors": [
         {
-            "name": "Francesco Apruzzese",
-            "email": "inerba@gmail.com",
+            "name": "CodeZi Pro",
+            "email": "codezi.pro@gmail.com",
             "role": "Developer"
         }
     ],
     "require": {
         "php": "^8.2",
-        "filament/filament": "^4.0",
-        "spatie/laravel-package-tools": "^1.15.0"
+        "ngankt2/laravel-helper": "^1.0"
     },
     "require-dev": {
         "laravel/pint": "^1.14",
@@ -36,12 +32,7 @@
             "src/helpers.php"
         ],
         "psr-4": {
-            "Inerba\\DbConfig\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Inerba\\DbConfig\\Tests\\": "tests/"
+            "Ngankt2\\DbConfig\\": "src/"
         }
     },
     "scripts": {
@@ -50,10 +41,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Inerba\\DbConfig\\DbConfigServiceProvider"
+                "Ngankt2\\DbConfig\\DbConfigServiceProvider"
             ],
             "aliases": {
-                "DbConfig": "Inerba\\DbConfig\\Facades\\DbConfig"
+                "DbConfig": "Ngankt2\\DbConfig\\Facades\\DbConfig"
             }
         }
     },

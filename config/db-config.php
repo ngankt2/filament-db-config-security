@@ -1,6 +1,4 @@
 <?php
-
-// config for Inerba/DbConfig
 return [
 
     /*
@@ -12,6 +10,7 @@ return [
     |
     */
     'table_name' => 'db_config',
+    'encrypt' => true,
 
     /*
     |--------------------------------------------------------------------------
@@ -26,7 +25,7 @@ return [
     */
     'cache' => [
         'prefix' => 'db-config',
-        'ttl' => null, // Cache forever by default
+        'ttl' => null,
     ],
 
 ];
