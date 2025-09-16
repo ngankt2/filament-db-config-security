@@ -29,7 +29,7 @@ abstract class AbstractPageSettings extends Page
      */
     public ?array $data = [];
 
-    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-wrench-screwdriver';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-wrench-screwdriver';
 
     /**
      * Returns the navigation group label used by the Filament UI to group this page.
@@ -43,6 +43,11 @@ abstract class AbstractPageSettings extends Page
     }
 
     abstract protected function settingName(): string;
+
+    protected function groupName(): string
+    {
+        return 'default';
+    }
 
     /**
      * Returns the default data used to initialize the page state.
@@ -62,8 +67,8 @@ abstract class AbstractPageSettings extends Page
      * Accepts timezone and format parameters and returns a formatted string, or null if the
      * timestamp is not available.
      *
-     * @param  string  $timezone  Timezone identifier, e.g., 'UTC', 'Europe/Rome'.
-     * @param  string  $format  Date format string compatible with PHP's date() function.
+     * @param string $timezone Timezone identifier, e.g., 'UTC', 'Europe/Rome'.
+     * @param string $format Date format string compatible with PHP's date() function.
      * @return string|null Formatted timestamp or null if not available.
      */
     public function lastUpdatedAt(string $timezone = 'UTC', string $format = 'F j, Y, g:i a'): ?string
@@ -79,14 +84,14 @@ abstract class AbstractPageSettings extends Page
      */
     public function mount(): void
     {
-        $db = DbConfig::getGroup($this->settingName()) ?? [];
+        $db = DbConfig::getWithoutCache($this->settingName(),[],  $this->groupName()) ?? [];
         $defaults = $this->getDefaultData();
 
         // Merge defaults with DB values: DB values take precedence.
         $this->data = array_replace_recursive($defaults, $db);
 
         // Support both $this->content and $this->form for the schema instance.
-        if (! isset($this->form)) {
+        if (!isset($this->form)) {
             $this->form = $this->content;
         }
 
@@ -106,20 +111,17 @@ abstract class AbstractPageSettings extends Page
     public function save(): void
     {
         // Support both $this->content and $this->form for the schema instance.
-        if (! isset($this->form)) {
+        if (!isset($this->form)) {
             $this->form = $this->content;
         }
 
-        if (! is_object($this->form) || ! method_exists($this->form, 'getState')) {
+        if (!is_object($this->form) || !method_exists($this->form, 'getState')) {
             throw new \RuntimeException('Expected $this->form to be an object exposing getState().');
         }
 
         /** @var array<string,mixed> $state */
         $state = $this->form->getState();
-
-        collect($state)->each(function ($setting, $key) {
-            DbConfig::set($this->settingName() . '.' . $key, $setting);
-        });
+        DbConfig::set($this->settingName(), $state, $this->groupName() ?? 'default');
 
         Notification::make()
             ->success()
@@ -134,7 +136,7 @@ abstract class AbstractPageSettings extends Page
             Action::make('save')
                 ->label(__('db-config::db-config.save'))
                 ->keyBindings(['mod+s'])
-                ->action(fn () => $this->save()),
+                ->action(fn() => $this->save()),
         ];
     }
 }

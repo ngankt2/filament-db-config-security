@@ -336,6 +336,6 @@ class DbConfigCommand extends Command
             return;
         }
 
-        $this->openUrlInBrowser('https://github.com/inerba/filament-db-config');
+        $this->openUrlInBrowser('https://github.com/ngankt2/filament-db-config-security');
     }
 }
