@@ -17,7 +17,7 @@ return new class extends Migration
 
             $table->string('key');
 
-            $table->json('settings')->nullable();
+            $table->text('settings')->nullable();
 
             $table->unique(['group', 'key']);
 
