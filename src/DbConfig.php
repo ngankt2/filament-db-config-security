@@ -136,7 +136,7 @@ class DbConfig
      * @param string $group The group name.
      * @return array<string, mixed>
      */
-    protected static function fetchConfig(string $key, string $group): array
+    protected static function fetchConfig(string $key, string $group): array | null | string
     {
         $tableName = config('db-config.table_name', 'db_config');
 

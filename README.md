@@ -9,6 +9,8 @@ I only retrieved the source code to customize and use it privately, including re
 
 Special thanks to the original author for their great work.
 
+`
+composer require ngankt2/filament-db-config-encrypt`
 
 # DB Config – Lightweight settings & content manager for Filament
 
