@@ -48,6 +48,10 @@ abstract class AbstractPageSettings extends Page
     {
         return 'default';
     }
+    protected function getMerge(): bool
+    {
+        return true;
+    }
 
     /**
      * Returns the default data used to initialize the page state.
@@ -59,21 +63,6 @@ abstract class AbstractPageSettings extends Page
     public function getDefaultData(): array
     {
         return [];
-    }
-
-    /**
-     * Returns the formatted last-updated timestamp for the settings group associated with this page.
-     *
-     * Accepts timezone and format parameters and returns a formatted string, or null if the
-     * timestamp is not available.
-     *
-     * @param string $timezone Timezone identifier, e.g., 'UTC', 'Europe/Rome'.
-     * @param string $format Date format string compatible with PHP's date() function.
-     * @return string|null Formatted timestamp or null if not available.
-     */
-    public function lastUpdatedAt(string $timezone = 'UTC', string $format = 'F j, Y, g:i a'): ?string
-    {
-        return DbConfig::getGroupLastUpdatedAt($this->settingName(), $format, $timezone);
     }
 
     /**
@@ -121,7 +110,7 @@ abstract class AbstractPageSettings extends Page
 
         /** @var array<string,mixed> $state */
         $state = $this->form->getState();
-        DbConfig::set($this->settingName(), $state, $this->groupName() ?? 'default');
+        DbConfig::set($this->settingName(), $state, $this->groupName() ?? 'default',  $this->getMerge());
 
         Notification::make()
             ->success()

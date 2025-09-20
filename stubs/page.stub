@@ -1,13 +1,12 @@
 <?php
-
-namespace App\Filament\$PANEL$Pages;
+namespace $NAMESPACE$;
 
 use BackedEnum;
 use Ngankt2\DbConfig\AbstractPageSettings;
 use Filament\Schemas\Components;
 use Filament\Schemas\Schema;
 
-class $CLASS_NAME$Settings extends AbstractPageSettings
+class $CLASS_NAME$ extends AbstractPageSettings
 {
     /**
      * @var array<string, mixed> | null
@@ -22,7 +21,9 @@ class $CLASS_NAME$Settings extends AbstractPageSettings
 
     // protected static ?string $slug = '$SETTING_NAME$-settings'; // Uncomment if you want to set a custom slug
 
-    protected string $view = 'filament.pages.$SETTING_NAME$-settings';
+    $CLUSTER_LINE$
+
+    $VIEW_LINE$
 
     protected function settingName(): string
     {

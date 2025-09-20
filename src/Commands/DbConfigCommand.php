@@ -2,65 +2,70 @@
 
 namespace Ngankt2\DbConfig\Commands;
 
-use Filament\Facades\Filament;
+use Filament\Support\Commands\Concerns\CanAskForViewLocation;
+use Filament\Support\Commands\Concerns\CanManipulateFiles;
+use Filament\Support\Commands\Concerns\HasCluster;
+use Filament\Support\Commands\Concerns\HasClusterPagesLocation;
+use Filament\Support\Commands\Concerns\HasPanel;
+use Filament\Support\Commands\Exceptions\FailureCommandOutput;
 use Filament\Support\Commands\Concerns\CanOpenUrlInBrowser;
 use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Pluralizer;
 use Illuminate\Support\Str;
+use Illuminate\Support\Stringable;
+use ReflectionClass;
 use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputOption;
 
 use function Laravel\Prompts\confirm;
-use function Laravel\Prompts\suggest;
+use function Laravel\Prompts\info;
+use function Laravel\Prompts\search;
 use function Laravel\Prompts\text;
 
-#[AsCommand(name: 'make:db-config', aliases: [
-    'db-config',
-])]
-/**
- * @method mixed argument(string|null $key = null)
- * @method void info(string $message)
- * @method void warn(string $message)
- */
+#[AsCommand(name: 'make:db-config', aliases: ['db-config'])]
 class DbConfigCommand extends Command
 {
+    use CanAskForViewLocation;
+    use CanManipulateFiles;
+    use HasCluster;
+    use HasClusterPagesLocation;
+    use HasPanel;
     use CanOpenUrlInBrowser;
 
-    public $signature = 'make:db-config {name?} {panel?}';
-
-    public $description = 'Create a new Filament settings Page class and its Blade view. '
-        . 'Usage: php artisan make:db-config [name?] [panel?] — generates '
-        . 'app/Filament/{Panel}/Pages/{Name}Settings.php and '
-        . 'resources/views/filament/config-pages/{name}.blade.php. '
+    protected $description
+        = 'Create a new Filament settings Page class and its Blade view. '
+        . 'Usage: php artisan make:db-config [name?] [panel?] [--cluster=] — generates '
+        . 'app/Filament/{Panel}/Pages/{Name}Settings.php or app/Filament/{Cluster}/Pages/{Name}Settings.php. '
         . 'If arguments are not provided, you will be prompted interactively. '
-        . 'Existing files will not be overwritten.';
+        . 'Existing files will not be overwritten unless --force is used.';
 
     /**
      * @var array<string>
      */
-    protected $aliases = [
-        'db-config',
-    ];
+    protected $aliases = ['db-config'];
+
+    /**
+     * @var class-string
+     */
+    protected string $fqn;
+
+    protected string $fqnEnd;
+
+    protected ?string $view = null;
+
+    protected ?string $viewPath = null;
+
+    protected string $pagesNamespace;
+
+    protected string $pagesDirectory;
 
     /**
      * Filesystem instance
      */
     protected Filesystem $files;
-
-    /**
-     * Cached name argument
-     */
-    protected ?string $cachedName = null;
-
-    /**
-     * Cached panel argument
-     */
-    protected ?string $cachedPanel = null;
-
-    /**
-     * Whether panel argument has been cached
-     */
-    protected bool $panelCached = false;
 
     /**
      * Create a new command instance.
@@ -73,164 +78,252 @@ class DbConfigCommand extends Command
     }
 
     /**
-     * Execute the console command.
+     * Get the console command arguments.
+     *
+     * @return array<InputArgument>
      */
-    public function handle(): void
+    protected function getArguments(): array
     {
-        // Collect input interactively if not provided
-        $name = $this->getNameArgument();
-        $panel = $this->getPanelArgument();
-
-        $path = $this->getSourceFilePath();
-
-        $this->makeDirectory(dirname($path));
-
-        $contents = $this->getSourceFile();
-
-        $this->createViewFromStub('filament.pages.' . Str::of($name)->headline()->lower()->slug() . '-settings');
-
-        if ($contents === false) {
-            $this->warn("Could not build source file contents for {$path}");
-
-            return;
-        }
-
-        if (! $this->files->exists($path)) {
-            $this->files->put($path, $contents);
-            $this->info("File : {$path} created");
-        } else {
-            $this->warn("File : {$path} already exits");
-        }
-
-        $this->askToStar();
+        return [
+            new InputArgument(
+                name: 'name',
+                mode: InputArgument::OPTIONAL,
+                description: 'The name of the settings page to generate, optionally prefixed with directories',
+            ),
+        ];
     }
 
     /**
-     * Get the name argument interactively if not provided
+     * Get the console command options.
+     *
+     * @return array<InputOption>
      */
-    protected function getNameArgument(): string
+    protected function getOptions(): array
     {
-        if ($this->cachedName !== null) {
-            return $this->cachedName;
+        return [
+            new InputOption(
+                name: 'panel',
+                mode: InputOption::VALUE_OPTIONAL,
+                description: 'The panel to create the settings page in',
+            ),
+            new InputOption(
+                name: 'cluster',
+                shortcut: 'C',
+                mode: InputOption::VALUE_OPTIONAL,
+                description: 'The cluster to create the settings page in',
+            ),
+            new InputOption(
+                name: 'force',
+                shortcut: 'F',
+                mode: InputOption::VALUE_NONE,
+                description: 'Overwrite the contents of the files if they already exist',
+            ),
+        ];
+    }
+
+    /**
+     * Execute the console command.
+     *
+     * @return int
+     */
+    public function handle(): int
+    {
+        try {
+            $this->configureFqnEnd();
+            $this->configurePanel(question: 'Which panel would you like to create this settings page in?');
+            $this->configureCluster();
+            $this->configurePagesLocation();
+            $this->configureLocation();
+
+            $this->createSettingsPage();
+            $this->createView();
+        } catch (FailureCommandOutput) {
+            return static::FAILURE;
         }
 
-        $name = $this->argument('name');
+        $this->components->info("Filament settings page [{$this->fqn}] created successfully.");
 
-        if (! $name) {
-            if ($this->option('no-interaction')) {
-                $this->error('The name argument is required when using --no-interaction flag.');
-                exit(1);
-            }
-
-            $name = text(
-                label: 'What is the name of the settings page?',
-                placeholder: 'E.g. Site, General, Mail',
-                hint: 'This will generate a {Name}Settings page class.',
-                required: true
-            );
+        if (empty($this->panel->getPageNamespaces())) {
+            $this->components->info('Make sure to register the settings page with [pages()] or discover it with [discoverPages()] in the panel service provider.');
         }
+
+        $this->askToStar();
+
+        return static::SUCCESS;
+    }
+
+    /**
+     * Configure the fully qualified name (FQN) end for the settings page.
+     */
+    protected function configureFqnEnd(): void
+    {
+        $name = $this->argument('name') ?? text(
+            label: 'What is the name of the settings page?',
+            placeholder: 'E.g. Site, General, Mail',
+            hint: 'This will generate a {Name}Settings page class.',
+            required: true
+        );
 
         // Remove trailing "settings" suffix (case-insensitive) and trim whitespace
         $name = (string) Str::of($name)
             ->replaceMatches('/settings$/i', '')
             ->trim();
 
-        return $this->cachedName = $name;
+        $this->fqnEnd = (string) Str::of($name)
+            ->trim('/')
+            ->trim('\\')
+            ->trim(' ')
+            ->studly()
+            ->append('Settings')
+            ->replace('/', '\\');
     }
 
     /**
-     * Get the panel argument interactively if not provided
+     * Configure the cluster for the settings page.
      */
-    protected function getPanelArgument(): ?string
+    protected function configureCluster(): void
     {
-        if ($this->panelCached) {
-            return $this->cachedPanel;
+        $this->configureClusterFqn(
+            initialQuestion: 'Would you like to create this settings page in a cluster?',
+            question: 'Which cluster would you like to create this settings page in?',
+        );
+
+        if (blank($this->clusterFqn)) {
+            return;
         }
 
-        $panel = $this->argument('panel');
+        $this->configureClusterPagesLocation();
+    }
 
-        if (! $panel && ! $this->option('no-interaction')) {
-            $availablePanels = $this->getAvailablePanels();
+    /**
+     * Configure the pages location for the settings page.
+     */
+    protected function configurePagesLocation(): void
+    {
+        if (filled($this->clusterFqn)) {
+            return;
+        }
 
-            if (count($availablePanels) < 2) {
-                $this->panelCached = true;
+        $directories = $this->panel->getPageDirectories();
+        $namespaces  = $this->panel->getPageNamespaces();
 
-                return $this->cachedPanel = null;
+        foreach ($directories as $index => $directory) {
+            if (Str::of($directory)->startsWith(base_path('vendor'))) {
+                unset($directories[$index]);
+                unset($namespaces[$index]);
             }
+        }
 
-            $panel = suggest(
-                label: 'Which Filament panel should this settings page be created for?',
-                options: $availablePanels,
-                placeholder: 'Leave empty for default panel',
-                hint: 'This will determine the directory structure for your settings page.'
+        if (count($namespaces) < 2) {
+            $this->pagesNamespace = (Arr::first($namespaces) ?? app()->getNamespace() . 'Filament\\Pages');
+            $this->pagesDirectory = (Arr::first($directories) ?? app_path('Filament/Pages/'));
+
+            return;
+        }
+
+        $keyedNamespaces = array_combine(
+            $namespaces,
+            $namespaces,
+        );
+
+        $this->pagesNamespace = search(
+            label: 'Which namespace would you like to create this settings page in?',
+            options: function (?string $search) use ($keyedNamespaces): array {
+                if (blank($search)) {
+                    return $keyedNamespaces;
+                }
+
+                $search = Str::of($search)->trim()->replace(['\\', '/'], '');
+
+                return array_filter($keyedNamespaces, fn(string $namespace): bool => Str::of($namespace)->replace(['\\', '/'], '')->contains($search, ignoreCase: true));
+            },
+        );
+        $this->pagesDirectory = $directories[array_search($this->pagesNamespace, $namespaces)];
+    }
+
+    /**
+     * Configure the location and view for the settings page.
+     */
+    protected function configureLocation(): void
+    {
+        $this->fqn = $this->pagesNamespace . '\\' . $this->fqnEnd;
+
+        $viewString = Str::of($this->fqn)
+            ->whenContains(
+                'Filament\\',
+                fn(Stringable $fqn) => $fqn->after('Filament\\')->prepend('filament/'),
+                fn(Stringable $fqn) => $fqn->replaceFirst(app()->getNamespace(), ''),
+            )
+            ->replace('\\', '/')
+            ->explode('/')
+            ->map(fn(string $part) => Str::kebab($part))
+            ->implode('.');
+
+        $viewString = 'db-config.' . $this->panel->getId() . '.' . Str::kebab($this->fqnEnd);
+
+        $useCustomView = confirm(
+            label: 'Would you like to use a custom view?',
+            default: true,
+        );
+
+        if ($useCustomView) {
+            [
+                $this->view,
+                $this->viewPath,
+            ] = $this->askForViewLocation(
+                view: $viewString,
+                question: 'Where would you like to create the Blade view for the settings page?',
+                defaultNamespace: 'filament.config-pages',
             );
+        } else {
+            $this->view     = null;
+            $this->viewPath = null;
+        }
+    }
 
-            // If user pressed enter without selecting anything, return null
-            if (empty($panel)) {
-                $panel = null;
-            }
+    /**
+     * Create the settings page class file.
+     */
+    protected function createSettingsPage(): void
+    {
+        $path = (string) Str::of("{$this->pagesDirectory}\\{$this->fqnEnd}.php")
+            ->replace('\\', '/')
+            ->replace('//', '/');
+
+        if (!$this->option('force') && $this->checkForCollision($path)) {
+            throw new FailureCommandOutput;
         }
 
-        $this->panelCached = true;
+        $contents = $this->getStubContents($this->getStubPath(), $this->getStubVariables());
 
-        return $this->cachedPanel = $panel;
+        if ($contents === false) {
+            $this->warn("Could not build source file contents for {$path}");
+            throw new FailureCommandOutput;
+        }
+
+        $this->writeFile($path, $contents);
     }
 
     /**
-     * Get available Filament panels from the app/Filament directory
-     *
-     * @return array<int,string> List of available panel names
+     * Create the Blade view file for the settings page.
      */
-    protected function getAvailablePanels(): array
+    protected function createView(): void
     {
-        $panels = Filament::getPanels();
-
-        return array_keys($panels);
-    }
-
-    /**
-     * Create a new view file from the stub.
-     *
-     * @param  string  $viewName  The name of the view.
-     */
-    public function createViewFromStub(string $viewName): void
-    {
-        // Define the path to the view stub.
-        $viewStubPath = __DIR__ . '/../../stubs/view.stub';
-
-        // Define the path to the new view file.
-        $newViewPath = \resource_path('views/' . str_replace('.', '/', $viewName) . '.blade.php');
-
-        if ($this->files->exists($newViewPath)) {
-            $this->warn("File : {$newViewPath} already exists");
-
+        if (blank($this->view)) {
             return;
         }
 
-        // Read the contents of the view stub.
-        $viewStubContents = file_get_contents($viewStubPath);
-
-        if ($viewStubContents === false) {
-            $this->warn("Unable to read view stub at {$viewStubPath}");
-
-            return;
+        if (!$this->option('force') && $this->checkForCollision($this->viewPath)) {
+            throw new FailureCommandOutput;
         }
 
-        // Replace any variables in the stub contents.
-        // In this example, we're replacing a variable named 'VIEW_NAME'.
-        $viewContents = str_replace('$VIEW_NAME$', $viewName, $viewStubContents);
-
-        // Create the directory for the new view file, if it doesn't already exist.
-        $this->makeDirectory(dirname($newViewPath));
-
-        // Write the view contents to the new view file using the Filesystem API.
-        $this->files->put($newViewPath, $viewContents);
-
-        $this->info("View file : {$newViewPath} created");
+        $this->copyStubToApp('view', $this->viewPath);
     }
 
     /**
-     * Return the stub file path
+     * Return the stub file path.
+     *
+     * @return string
      */
     public function getStubPath(): string
     {
@@ -238,41 +331,44 @@ class DbConfigCommand extends Command
     }
 
     /**
-     * Map the stub variables present in stub to its value
+     * Map the stub variables present in stub to their values.
      *
-     * @return array<string,string>
+     * @return array<string, string>
      */
     public function getStubVariables(): array
     {
-        $name = $this->getNameArgument();
-        $panel = $this->getPanelArgument();
+        $name = Str::of($this->fqnEnd)->beforeLast('Settings')->trim();
+        $singularClassName = Pluralizer::singular($name);
 
-        $singularClassName = $this->getSingularClassName($name);
-
-        return [
-            'TITLE' => Str::headline($singularClassName),
-            'PANEL' => $panel ? ucfirst($panel) . '\\' : '',
-            'CLASS_NAME' => $singularClassName,
-            'SETTING_NAME' => Str::of($name)->headline()->lower()->slug(),
+        $variables = [
+            'TITLE'        => Str::headline($singularClassName),
+            'NAMESPACE'    => $this->pagesNamespace,
+            'CLASS_NAME'   => $this->fqnEnd,
+            'SETTING_NAME' => Str::of($singularClassName)->headline()->lower()->slug(),
         ];
+
+        // Add view variable to the stub (assumes stub has placeholder $VIEW_LINE$)
+        // If no view is specified, use the default view or allow users to add it later
+        $variables['VIEW_LINE'] = $this->view
+            ? "protected string \$view = '{$this->view}';\n"
+            : "protected string \$view = 'db-config::settings-base'; // Change this if you want to use a custom view\n";
+
+        // Add cluster variable to the stub (assumes stub has placeholder $CLUSTER_LINE$)
+        // If a cluster is specified, add the $cluster property with the full namespace
+        $variables['CLUSTER_LINE'] = filled($this->clusterFqn)
+            ? "protected static ?string \$cluster = \\{$this->clusterFqn}::class;\n"
+            : '';
+
+        return $variables;
     }
 
     /**
-     * Get the stub path and the stub variables
+     * Replace the stub variables with their desired values.
      *
-     * @return string|false The generated source contents or false on failure
+     * @param array<string, string> $stubVariables
+     * @return string|false
      */
-    public function getSourceFile(): string | false
-    {
-        return $this->getStubContents($this->getStubPath(), $this->getStubVariables());
-    }
-
-    /**
-     * Replace the stub variables(key) with the desire value
-     *
-     * @param  array<string,string>  $stubVariables
-     */
-    public function getStubContents(string $stub, array $stubVariables = []): string | false
+    public function getStubContents(string $stub, array $stubVariables = []): string|false
     {
         $contents = file_get_contents($stub);
 
@@ -288,48 +384,15 @@ class DbConfigCommand extends Command
     }
 
     /**
-     * Get the full path of the generated class.
+     * Prompt the user to star the GitHub repository.
      */
-    public function getSourceFilePath(): string
-    {
-        $name = $this->getNameArgument();
-        $panel = $this->getPanelArgument();
-
-        $panelPrefix = $panel ? ucfirst($panel) . '\\' : '';
-
-        $path = \base_path('app\\Filament\\' . $panelPrefix . 'Pages') . '\\' . $this->getSingularClassName($name) . 'Settings.php';
-
-        return str_replace('\\', '/', $path);
-    }
-
-    /**
-     * Return the Singular Capitalize Name
-     */
-    public function getSingularClassName(string $name): string
-    {
-        return ucwords(Pluralizer::singular($name));
-    }
-
-    /**
-     * Build the directory for the class if necessary.
-     */
-    protected function makeDirectory(string $path): string
-    {
-
-        if (! $this->files->isDirectory($path)) {
-            $this->files->makeDirectory($path, 0777, true, true);
-        }
-
-        return $path;
-    }
-
     protected function askToStar(): void
     {
         if ($this->option('no-interaction')) {
             return;
         }
 
-        if (! confirm(
+        if (!confirm(
             label: '🚀 All set! If this tool saved you time, why not give it a ⭐ on GitHub? Your support helps keep it alive!',
             default: true,
         )) {
