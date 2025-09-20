@@ -54,6 +54,12 @@ return [
     ],
 ];
 ```
+```dotenv
+# .env example for encryption keys
+ENCRYPT_DB_EMAIL=YOUR_KEY_HERE
+ENCRYPT_DB_PHONE=YOUR_KEY_HERE
+ENCRYPT_DB_OTHER=YOUR_KEY_HERE
+```
 
 - `table_name`: The name of the database table to store settings.
 - `encrypt`: Set to `true` to encrypt settings before storing them in the database.
