@@ -28,16 +28,16 @@ class DbConfig
      * @return mixed The configuration value.
      */
 
-    private static function decodeSetting($settingValue)
+    private static function decodeSetting($settingValue, $encrypt)
     {
         if (!$settingValue) {
             return null;
         }
-        $settingValue = config('db-config.encrypt') ? _decrypt_static($settingValue) : $settingValue;
+        $settingValue = $encrypt ? _decrypt_static($settingValue) : $settingValue;
         return json_decode($settingValue, true);
     }
 
-    private static function encodeSetting(mixed $value): string
+    private static function encodeSetting(mixed $value, $encrypt = true): string
     {
         try {
             $encoded = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
@@ -45,10 +45,10 @@ class DbConfig
             throw new \RuntimeException('Unable to serialize value to JSON: ' . $e->getMessage(), 0, $e);
         }
 
-        return config('db-config.encrypt') ? _encrypt_static($encoded) : $encoded;
+        return $encrypt ? _encrypt_static($encoded) : $encoded;
     }
 
-    public static function get(string $key, mixed $default = null, $group = 'default'): mixed
+    public static function get(string $key, mixed $default = null, $group = 'default', $encrypt = true): mixed
     {
 
         $cacheKey = static::getCacheKey($key);
@@ -61,13 +61,13 @@ class DbConfig
             ? Cache::remember($cacheKey, $cacheTtl * 60, $callback)
             : Cache::rememberForever($cacheKey, $callback);
 
-        return self::decodeSetting($data) ?? $default;
+        return self::decodeSetting($data, $encrypt) ?? $default;
     }
 
-    public static function getWithoutCache(string $key, mixed $default = null, $group = 'default'): mixed
+    public static function getWithoutCache(string $key, mixed $default = null, $group = 'default', bool $encrypt = true): mixed
     {
         $data = static::fetchConfig($key, $group);
-        return self::decodeSetting($data) ?? $default;
+        return self::decodeSetting($data, $encrypt) ?? $default;
     }
 
     /**
@@ -80,22 +80,22 @@ class DbConfig
      * @param mixed $value The configuration value.
      * @param bool $merge Whether to merge with existing value (true) or reset/override (false).
      */
-    public static function set(string $key, mixed $value, string $group = 'default', bool $merge = true): void
+    public static function set(string $key, mixed $value, string $group = 'default', bool $merge = true, bool $encrypt = true): void
     {
         $cacheKey = static::getCacheKey($key, $group);
 
         Cache::forget($cacheKey);
 
-        $existingData = static::fetchConfig($key, $group);
-        $existingValue = self::decodeSetting($existingData);
+        $existingData  = static::fetchConfig($key, $group);
+        $existingValue = self::decodeSetting($existingData, $encrypt);
 
         if ($merge && is_array($existingValue) && is_array($value)) {
             // Merge recursively: override duplicate keys, keep non-duplicate
             $mergedValue = array_replace_recursive($existingValue, $value);
-            static::storeConfig($key, $mergedValue, $group);
+            static::storeConfig($key, $mergedValue, $group, $encrypt);
         } else {
             // Reset/override
-            static::storeConfig($key, $value, $group);
+            static::storeConfig($key, $value, $group, $encrypt);
         }
     }
 
@@ -131,11 +131,11 @@ class DbConfig
      * @param string $key
      * @param mixed $value The value to be stored.
      */
-    protected static function storeConfig(string $key, mixed $value, $group = 'default'): void
+    protected static function storeConfig(string $key, mixed $value, $group = 'default', $encrypt = true): void
     {
         $tableName = config('db-config.table_name', 'db_config');
 
-        $encoded = self::encodeSetting($value);
+        $encoded = self::encodeSetting($value, $encrypt);
 
         DB::table($tableName)->upsert(
             [

@@ -48,9 +48,15 @@ abstract class AbstractPageSettings extends Page
     {
         return 'default';
     }
+
     protected function getMerge(): bool
     {
         return true;
+    }
+
+    protected function getEncrypted(): bool
+    {
+        return config('db-config.encrypt', true);
     }
 
     /**
@@ -73,7 +79,7 @@ abstract class AbstractPageSettings extends Page
      */
     public function mount(): void
     {
-        $db = DbConfig::getWithoutCache($this->settingName(),[],  $this->groupName()) ?? [];
+        $db       = DbConfig::getWithoutCache($this->settingName(), [], $this->groupName()) ?? [];
         $defaults = $this->getDefaultData();
 
         // Merge defaults with DB values: DB values take precedence.
@@ -110,7 +116,7 @@ abstract class AbstractPageSettings extends Page
 
         /** @var array<string,mixed> $state */
         $state = $this->form->getState();
-        DbConfig::set($this->settingName(), $state, $this->groupName() ?? 'default',  $this->getMerge());
+        DbConfig::set($this->settingName(), $state, $this->groupName() ?? 'default', $this->getMerge(), $this->getEncrypted());
 
         Notification::make()
             ->success()
