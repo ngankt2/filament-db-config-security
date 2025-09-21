@@ -79,12 +79,13 @@ abstract class AbstractPageSettings extends Page
      */
     public function mount(): void
     {
-        $db       = DbConfig::getWithoutCache($this->settingName(), [], $this->groupName()) ?? [];
+        $db       = DbConfig::getWithoutCache($this->settingName(), [], $this->groupName(),$this->getEncrypted()) ?? [];
+        //dump($db);
         $defaults = $this->getDefaultData();
 
         // Merge defaults with DB values: DB values take precedence.
         $this->data = array_replace_recursive($defaults, $db);
-
+        //dump($this->data);
         // Support both $this->content and $this->form for the schema instance.
         if (!isset($this->form)) {
             $this->form = $this->content;
